@@ -1,0 +1,47 @@
+[versions]
+agp = "8.5.0"
+kotlin = "1.9.0"
+coreKtx = "1.13.1"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
+material = "1.12.0"
+activity = "1.9.2"
+constraintlayout = "2.1.4"
+navigationFragmentKtx = "2.8.0"
+navigationUiKtx = "2.8.0"
+mark-down="4.6.2"
+
+sdpAndroid = "1.1.0"
+
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
+androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
+
+android-mark-down-core = { group = "io.noties.markwon", name = "core", version.ref = "mark-down" }
+android-mark-down-editor = { group = "io.noties.markwon", name = "editor", version.ref = "mark-down" }
+android-mark-down-strike = { group = "io.noties.markwon", name = "ext-strikethrough", version.ref = "mark-down" }
+android-mark-down-table = { group = "io.noties.markwon", name = "ext-tables", version.ref = "mark-down" }
+android-mark-down-task = { group = "io.noties.markwon", name = "ext-tasklist", version.ref = "mark-down" }
+android-mark-linkify = { group = "io.noties.markwon", name = "linkify", version.ref = "mark-down" }
+android-mark-html = { group = "io.noties.markwon", name = "html", version.ref = "mark-down" }
+
+sdp-android = { module = "com.intuit.sdp:sdp-android", version.ref = "sdpAndroid" }
+
+[bundles]
+android-mark-down = ["android-mark-html","android-mark-down-core","android-mark-down-editor","android-mark-down-strike","android-mark-down-table","android-mark-down-task","android-mark-linkify"]
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+

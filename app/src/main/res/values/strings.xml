@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">MarkDownApp</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="type_your_markdown_here">Type your markdown here...</string>
+    <string name="preview_will_be_shown_here">Preview will be shown here...</string>
+    <string name="italic">Italic</string>
+    <string name="bold">Bold</string>
+    <string name="mention">Mention</string>
+    <string name="message_at">Message at ...</string>
+    <string name="add_link">Link</string>
+    <string name="order">Order</string>
+    <string name="bullet">Bullet</string>
+    <string name="strike">Strike</string>
+</resources>

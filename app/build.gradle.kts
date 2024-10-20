@@ -56,4 +56,8 @@ dependencies {
 
     implementation (libs.bundles.android.mark.down)
 
+    implementation ("com.google.code.gson:gson:2.8.9")
+
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+
 }

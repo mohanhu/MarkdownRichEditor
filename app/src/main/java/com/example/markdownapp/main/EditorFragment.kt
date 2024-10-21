@@ -23,6 +23,7 @@ import com.example.markdownapp.richtextlib.BlockKit.blockKitListGenerate
 import com.example.markdownapp.richtextlib.BlockKitData
 import com.example.markdownapp.richtextlib.BlockKitManage
 import com.example.markdownapp.richtextlib.MarkDownCallBack
+import com.example.markdownapp.richtextlib.MarkDownStyle.listenCurrentStyleFormat
 import com.example.markdownapp.richtextlib.MarkDownStyle.makeStyleFormat
 import com.example.markdownapp.richtextlib.MarkDownStyle.onTypeStateChange
 import com.example.markdownapp.richtextlib.MarkDownStyle.toggleStyle
@@ -88,8 +89,7 @@ class EditorFragment : Fragment() , MarkDownCallBack {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED){
-                viewModel.uiState.map { it.currentIndex }.distinctUntilChanged().collectLatest {
-                }
+                viewModel.uiState.map { it.currentIndex }.distinctUntilChanged().collectLatest {}
             }
         }
     }
@@ -177,23 +177,22 @@ class EditorFragment : Fragment() , MarkDownCallBack {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val cursor = binding.overlayEditText.selectionStart?.takeIf { it>=0 }?:0
-                if (LAST_RICH_EDITOR_CURSOR_POSITION < cursor && currentTypeStyle!=Styles.PLAIN) {
-                    println("EditText.onTypeStateChange >>>> $cursor >>${s?.length}")
-                    binding.overlayEditText.apply {
-                        onTypeStateChange(cursor, currentTypeStyle)
-                    }
+                if(LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
+                    println("binding.overlayEditText.addTextChangedListener >>> satisfied ${binding.overlayEditText.selectionStart}")
+//                    binding.overlayEditText.handleInBetweenStylesChar(start,count,currentTypeStyle)
                 }
-//                val cursor = binding.overlayEditText.selectionStart
-//                if(LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
-//                    println("binding.overlayEditText.addTextChangedListener >>> satisfied ${binding.overlayEditText.selectionStart}")
-////                    binding.overlayEditText.handleMarkDownWatcher(start,count,currentTypeStyle)
-//                }
 //                println("EditText.handleMarkDownWatcher start >> gothrough char >>>Last>$LAST_RICH_EDITOR_CURSOR_POSITION start>$start >>before>$before >>count>$count")
 //                if (before > 0 && count == 0 && binding.overlayEditText.selectionStart>0) { }
             }
 
             override fun afterTextChanged(s: Editable?) {
                 val cursor = binding.overlayEditText.selectionStart?.takeIf { it>=0 }?:0
+                if (LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
+                    println("EditText.onTypeStateChange >>>> $cursor >>${s?.length}")
+                    binding.overlayEditText.apply {
+                        onTypeStateChange(cursor, currentTypeStyle)
+                    }
+                }
                 if (binding.overlayEditText.currentLineStartsWithDash() && LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
                     binding.overlayEditText.text?.insert(cursor, "• ")
                 }
@@ -219,27 +218,21 @@ class EditorFragment : Fragment() , MarkDownCallBack {
     @SuppressLint("ClickableViewAccessibility")
     private fun onClickListeners() {
         binding.boldButton.setOnClickListener {
-            binding.overlayEditText.toggleStyle(Styles.BOLD)
             currentTypeStyle = if (currentTypeStyle == Styles.BOLD){
-                binding.overlayEditText.apply {
-                    text?.insert(selectionStart.takeIf { it>=0 }?:0," ")
-                    setSelection(selectionStart.takeIf { it>=0 }?:0)
-                }
+                binding.overlayEditText.toggleStyle(Styles.PLAIN)
                 Styles.PLAIN
             } else {
+                binding.overlayEditText.toggleStyle(Styles.BOLD)
                 Styles.BOLD
             }
         }
 
         binding.italicButton.setOnClickListener {
-            binding.overlayEditText.toggleStyle(Styles.ITALIC)
             currentTypeStyle = if (currentTypeStyle == Styles.ITALIC){
-                binding.overlayEditText.apply {
-                    text?.insert(selectionStart.takeIf { it>=0 }?:0," ")
-                    setSelection(selectionStart.takeIf { it>=0 }?:0)
-                }
+                binding.overlayEditText.toggleStyle(Styles.PLAIN)
                 Styles.PLAIN
             } else {
+                binding.overlayEditText.toggleStyle(Styles.ITALIC)
                 Styles.ITALIC
             }
         }
@@ -259,7 +252,11 @@ class EditorFragment : Fragment() , MarkDownCallBack {
         binding.overlayEditText.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 v.post {
-                    LAST_RICH_EDITOR_CURSOR_POSITION = binding.overlayEditText.selectionStart
+                    binding.overlayEditText.listenCurrentStyleFormat{ styles: Styles ->
+                        currentTypeStyle = styles
+                        LAST_RICH_EDITOR_CURSOR_POSITION = binding.overlayEditText.selectionStart/**/
+                    }
+                    println("binding.overlayEditText.setOnTouchListener ACTION_UP >>1>$currentTypeStyle")
                 }
             }
             false

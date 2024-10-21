@@ -1,7 +1,7 @@
 package com.example.markdownapp.richtextlib
 
 import android.graphics.Typeface
-import android.text.SpannableStringBuilder
+import android.text.Spannable
 import android.widget.EditText
 import com.google.gson.annotations.SerializedName
 
@@ -9,8 +9,7 @@ object BlockKit {
 
     fun EditText.blockKitListGenerate() : BlockKitData {
 
-        val spannableText = SpannableStringBuilder(text)
-
+        val spannableText = text as Spannable
         /**
          * Filter based on MentionClickableSpan to filter mention and link
          * */
@@ -42,7 +41,7 @@ object BlockKit {
          * */
 
         val boldSpan = spannableText.getSpans(0 , spannableText.length, StyleMakeSpan::class.java)
-        boldSpan.toList().asSequence().filter { span -> span.style == Typeface.BOLD || span.style== Typeface.ITALIC }
+        boldSpan.filter { span -> span.style == Typeface.BOLD || span.style== Typeface.ITALIC }
             .map { span->
                 val start = spannableText.getSpanStart(span)
                 val end = spannableText.getSpanEnd(span)
@@ -55,7 +54,7 @@ object BlockKit {
                 println("Mohan Typeface.BOLD::class.java ::: getChangedName>start>$start>end>$end >start>$original>end>${span.getChangedName()}>style>$styleFormat")
                 MentionDataClass(startIndex = start, endIndex = end , isSame = true ,word = original , key = "", styleFormat = styleFormat )
             }.toList()
-            .reversed().distinctBy { Pair(it.startIndex, it.endIndex) }.sortedBy { it.startIndex }
+            .reversed().distinctBy { Pair(it.startIndex, it.endIndex) }.distinctBy { it.startIndex }.sortedBy { it.startIndex }
             .also { dataClasses ->
                 println("Mohan Typeface.BOLD::class.java ::: getChangedName>start>filter>>>$dataClasses")
             mergeAdjacentMentions(dataClasses,text.toString()).also { update->
@@ -64,6 +63,10 @@ object BlockKit {
         }
 
         val filterList = filterBasedOnIndex(mentionList.filter { it.isSame }.sortedBy { it.startIndex })
+
+        filterList.forEach {
+            println("filterBasedOnIndex block filter search >>>> $it")
+        }
 
         return BlockKitData(text = "", block = filterList.map { it.toBlockKitManage() } )
     }
@@ -106,7 +109,7 @@ object BlockKit {
                 if (first.endIndex > next.startIndex) {
                     println("mergeAdjacentMentions  <<<satisfied>> ")
                     lastFilter.add(MentionDataClass(startIndex = first.startIndex, endIndex = next.startIndex, word = word.substring(first.startIndex,next.startIndex), styleFormat = first.styleFormat))
-                    lastFilter.add(MentionDataClass(startIndex = next.endIndex, endIndex = first.endIndex, word = word.substring(next.endIndex,first.endIndex), styleFormat = first.styleFormat))
+                    lastFilter.add(MentionDataClass(startIndex = next.startIndex, endIndex = first.endIndex, word = word.substring(next.startIndex,first.endIndex), styleFormat = next.styleFormat))
                     lastFilter.add(next)
                 }
                 else{

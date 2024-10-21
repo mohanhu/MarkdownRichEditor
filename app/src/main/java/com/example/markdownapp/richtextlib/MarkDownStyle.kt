@@ -24,8 +24,8 @@ object MarkDownStyle {
         val spans = spannableText.getSpans(start, end, StyleMakeSpan::class.java)
 
         if (selectorTextAndUpdate.isEmpty() || start==end ){
-            text?.insert(start," ")
-            spannableText.setSpan(StyleMakeSpan(styleType," "),start,start+1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            text?.insert(start,"\u00A0")
+            spannableText.setSpan(StyleMakeSpan(styleType,"\u00A0"),start,start+1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             setSelection(start,start+1)
             return
         }
@@ -50,8 +50,8 @@ object MarkDownStyle {
     fun EditText.makeStyleFormat(mention: String,style:Styles,start:Int,end:Int) {
         val spannable = text as Spannable
         when(style){
-            Styles.BOLD -> spannable.setSpan(StyleMakeSpan(Typeface.BOLD,mention), start, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
-            Styles.ITALIC -> spannable.setSpan(StyleMakeSpan(Typeface.ITALIC,mention), start, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+            Styles.BOLD -> spannable.setSpan(StyleMakeSpan(Typeface.BOLD,mention), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            Styles.ITALIC -> spannable.setSpan(StyleMakeSpan(Typeface.ITALIC,mention), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             else -> {}
         }
 //        setText(spannable, TextView.BufferType.SPANNABLE)
@@ -148,37 +148,42 @@ object MarkDownStyle {
 
         println("EditText.onTypeStateChange >>> existingSpans>${existingSpans.size}")
 
-        if (existingSpans.isEmpty()){
-            editableText.setSpan(StyleMakeSpan(style, editableText.substring(start-1, start)), start-1, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            return
-        }
+       try {
+           if (existingSpans.isEmpty()){
+               editableText.setSpan(StyleMakeSpan(style, editableText.substring(start-1, start)), start-1, start, Spannable.SPAN_INCLUSIVE_EXCLUSIVE)
+               return
+           }
 
-        existingSpans.forEach {
-            val startSpan = editableText.getSpanStart(it)
-            val endSpan = editableText.getSpanEnd(it)
-            if (start in startSpan..endSpan) {
-            if (it.style == style) {
-                editableText.removeSpan(it)
-                println("Updating span from yes $startSpan to $endSpan >>>$start")
-                if (startSpan < start) {
-                    editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(startSpan,start)), startSpan, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                }
-                if (start < endSpan) {
-                    editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(startSpan,start)), start, endSpan, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                }
-            } else {
-                println("Updating span from $startSpan to $start")
-                editableText.removeSpan(it)
-                if (startSpan < start-1) {
-                    editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(startSpan,start-1)), startSpan, start-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                }
-                if (start < endSpan) {
-                    editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(start,endSpan)), start, endSpan, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                }
-                editableText.setSpan(StyleMakeSpan(typeface = style,text.toString().substring(startSpan,start-1)), start-1, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            }
-        }}
-        setSelection(start)
+           existingSpans.forEach {
+               val startSpan = editableText.getSpanStart(it)
+               val endSpan = editableText.getSpanEnd(it)
+               if (start in startSpan..endSpan) {
+                   if (it.style == style) {
+                       editableText.removeSpan(it)
+                       println("Updating span from yes $startSpan to $endSpan >>>$start")
+                       if (startSpan < start) {
+                           editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(startSpan,start)), startSpan, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                       }
+                       if (start < endSpan) {
+                           editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(startSpan,start)), start, endSpan, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                       }
+                   } else {
+                       println("Updating span from $startSpan to $start")
+                       editableText.removeSpan(it)
+                       if (startSpan < start-1) {
+                           editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(startSpan,start-1)), startSpan, start-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                       }
+                       if (start < endSpan) {
+                           editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(start,endSpan)), start, endSpan, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                       }
+                       editableText.setSpan(StyleMakeSpan(typeface = style,text.toString().substring(startSpan,start-1)), start-1, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                   }
+               }}
+           setSelection(start)
+       }
+       catch (e:Exception){
+
+       }
     }
 
     fun EditText.listenCurrentStyleFormat(currentStyle: (Styles)->Unit) {

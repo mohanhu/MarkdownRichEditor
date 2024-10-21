@@ -109,16 +109,16 @@ object StyleActionBindClick {
         val spannable = SpannableStringBuilder(text)
         val selection = text.toString().substring(start,end)
 
+        val spanAny = spannable.getSpans(start,end,Any::class.java)
+        spanAny.forEach {
+            spannable.removeSpan(it)
+        }
         val clickableSpan = MentionClickableSpan(selection,url) { name,Id->
             println("MentionClickableSpan >>> $name <$Id")
         }
         clickableSpan.setCurrentStyle(Styles.LINK)
         spannable.setSpan(clickableSpan, start, start + selection.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         spannable.setSpan(ForegroundColorSpan(ContextCompat.getColor(context, R.color.reply_message_sender_color)), start, start + selection.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        val spans = spannable.getSpans(start,start+selection.length,StyleMakeSpan::class.java)
-        spans.forEach {
-            spannable.removeSpan(it)
-        }
         setText(spannable, TextView.BufferType.SPANNABLE)
         text?.insert(start+selection.length," ")
         setSelection(start+selection.length+1)

@@ -97,19 +97,18 @@ object BlockKit {
         // Add the last entry
         mergedMentions.add(current)
 
-        println("mergeAdjacentMentions  <<<parent $mergedMentions")
-
+        /**
+         * safety check if one item exceed the another item index*/
         if (mergedMentions.size>1){
-            mergedMentions.forEachIndexed { index, mentionDataClass ->
+            mergedMentions.distinctBy { it.startIndex }.forEachIndexed { index, mentionDataClass ->
             try {
                 val first = mergedMentions[index]
                 val next = mergedMentions[index+1]
                 println("mergeAdjacentMentions  <<<first $first")
                 println("mergeAdjacentMentions  <<<next $next")
                 if (first.endIndex > next.startIndex) {
-                    println("mergeAdjacentMentions  <<<satisfied>> ")
+                    println("mergeAdjacentMentions  <<satis")
                     lastFilter.add(MentionDataClass(startIndex = first.startIndex, endIndex = next.startIndex, word = word.substring(first.startIndex,next.startIndex), styleFormat = first.styleFormat))
-                    lastFilter.add(MentionDataClass(startIndex = next.startIndex, endIndex = first.endIndex, word = word.substring(next.startIndex,first.endIndex), styleFormat = next.styleFormat))
                     lastFilter.add(next)
                 }
                 else{

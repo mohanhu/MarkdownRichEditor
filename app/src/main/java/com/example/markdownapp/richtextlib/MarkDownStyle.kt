@@ -22,11 +22,15 @@ object MarkDownStyle {
         val spannableText = text as Spannable
 
         val spans = spannableText.getSpans(start, end, StyleMakeSpan::class.java)
+        val mentionLink = spannableText.getSpans(start, end, MentionClickableSpan::class.java)
 
         if (selectorTextAndUpdate.isEmpty() || start==end ){
             text?.insert(start,"\u00A0")
             spannableText.setSpan(StyleMakeSpan(styleType,"\u00A0"),start,start+1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             setSelection(start,start+1)
+            return
+        }
+        mentionLink.forEach { _ ->
             return
         }
 
@@ -41,7 +45,7 @@ object MarkDownStyle {
 
         // If the text is not style, apply the span
         if (!isStyle) {
-            spannableText.setSpan(StyleMakeSpan(styleType,selectorTextAndUpdate), start, start+selectorTextAndUpdate.length, Spannable.SPAN_INCLUSIVE_EXCLUSIVE)
+            spannableText.setSpan(StyleMakeSpan(styleType,selectorTextAndUpdate), start, start+selectorTextAndUpdate.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         setSelection(start)
     }
@@ -150,7 +154,7 @@ object MarkDownStyle {
 
        try {
            if (existingSpans.isEmpty()){
-               editableText.setSpan(StyleMakeSpan(style, editableText.substring(start-1, start)), start-1, start, Spannable.SPAN_INCLUSIVE_EXCLUSIVE)
+               editableText.setSpan(StyleMakeSpan(style, editableText.substring(start-1, start)), start-1, start, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
                return
            }
 

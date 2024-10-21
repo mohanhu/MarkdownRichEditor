@@ -13,6 +13,7 @@ import com.example.markdownapp.R
 object StyleActionBindClick {
 
     fun EditText.addBulletList() {
+        val spannableStringBuilder = SpannableStringBuilder(text)
         val start = selectionStart.takeIf { it!=-1 }?:0
         val end = selectionEnd.takeIf { it!=-1 }?:0
         val selectedText = text.substring(start, end)
@@ -29,10 +30,9 @@ object StyleActionBindClick {
         } else {
             "\n"+  lines.joinToString("\n") { "• $it" }
         }
-
         // Replace the selected text with the bullet list
-        text.replace(start, end, bulletListText)
-
+        spannableStringBuilder.replace(start, end, bulletListText)
+        setText(spannableStringBuilder,TextView.BufferType.SPANNABLE)
         // Adjust the cursor position after inserting the bullet list
         setSelection(start + bulletListText.length)
     }

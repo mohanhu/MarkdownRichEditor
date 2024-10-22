@@ -1,4 +1,4 @@
-package com.example.markdownapp.richtextlib
+package com.example.markdownapp.spanrichlib
 
 import android.text.Spannable
 import android.text.SpannableStringBuilder
@@ -107,12 +107,13 @@ object StyleActionBindClick {
         val start = selectionStart.takeIf { it != -1 } ?: 0
         val end = selectionEnd.takeIf { it != -1 } ?: 0
         val spannable = SpannableStringBuilder(text)
-        val selection = text.toString().substring(start,end)
+        val selection = "uybrcfuyrwt3yuyvirqy3li"
 
         val spanAny = spannable.getSpans(start,end,Any::class.java)
         spanAny.forEach {
             spannable.removeSpan(it)
         }
+        spannable.replace(start,end,selection)
         val clickableSpan = MentionClickableSpan(selection,url) { name,Id->
             println("MentionClickableSpan >>> $name <$Id")
         }

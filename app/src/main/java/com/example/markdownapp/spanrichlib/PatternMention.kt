@@ -1,4 +1,4 @@
-package com.example.markdownapp.richtextlib
+package com.example.markdownapp.spanrichlib
 
 import java.util.regex.Pattern
 

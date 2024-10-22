@@ -1,4 +1,4 @@
-package com.example.markdownapp.richtextlib
+package com.example.markdownapp.spanrichlib
 
 import android.graphics.Typeface
 import android.text.Spannable
@@ -6,7 +6,7 @@ import android.text.SpannableStringBuilder
 import android.widget.EditText
 import android.widget.TextView
 
-object MarkDownStyle {
+object RichSpanDownStyle {
 
     fun EditText.toggleStyle(style : Styles) {
 

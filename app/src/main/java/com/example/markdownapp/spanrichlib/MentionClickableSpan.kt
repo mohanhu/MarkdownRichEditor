@@ -1,4 +1,4 @@
-package com.example.markdownapp.richtextlib
+package com.example.markdownapp.spanrichlib
 
 import android.graphics.Typeface
 import android.text.TextPaint

@@ -1,4 +1,4 @@
-package com.example.markdownapp.richtextlib
+package com.example.markdownapp.spanrichlib
 
 import android.content.Context
 import android.graphics.Typeface
@@ -24,10 +24,10 @@ import io.noties.markwon.linkify.LinkifyPlugin
 
 class RichSpanText(context: Context, attributeSet: AttributeSet) : AppCompatTextView(context,attributeSet) {
 
-    private lateinit var markDownCallBack: MarkDownCallBack
+    private lateinit var richSpanCallBack: RichSpanCallBack
 
-    fun getInstance(mark: MarkDownCallBack) {
-        markDownCallBack = mark
+    fun getInstance(mark: RichSpanCallBack) {
+        richSpanCallBack = mark
     }
 
     private var spannableStringBuilder : SpannableStringBuilder = SpannableStringBuilder(" ")
@@ -88,10 +88,10 @@ class RichSpanText(context: Context, attributeSet: AttributeSet) : AppCompatText
                                 val id = "<@(\\d+),([^>]+)>".toRegex()
                                 val value = id.find(patternString.patternValue)?.groupValues
                                 println("markDownCallBack.mentionOnClick >>> $value")
-                                markDownCallBack.mentionOnClick(value?.get(1)?:"")
+                                richSpanCallBack.mentionOnClick(value?.get(1)?:"")
                             }
                             PATTERN_TYPE.URL_PATTERN->{
-                               markDownCallBack.urlOnClick(patternString.patternValue)
+                               richSpanCallBack.urlOnClick(patternString.patternValue)
                             }
                         }
                     }
@@ -131,7 +131,7 @@ class RichSpanText(context: Context, attributeSet: AttributeSet) : AppCompatText
             spans.sortedBy { it.startIndex }.forEach {
                 if(it.styleFormat == Styles.LINK){
                     val linkSpan = MentionClickableSpan(mentionName = it.word, mentionId = it.key){_,url->
-                        markDownCallBack.urlOnClick(url = url)
+                        richSpanCallBack.urlOnClick(url = url)
                     }
                     linkSpan.setCurrentStyle(Styles.LINK)
                     spannableStringBuilder.setSpan(linkSpan,it.startIndex,it.endIndex,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -139,7 +139,7 @@ class RichSpanText(context: Context, attributeSet: AttributeSet) : AppCompatText
                 }
                 if ( it.styleFormat == Styles.MENTION) {
                     val linkSpan = MentionClickableSpan(mentionName = it.word, mentionId = it.key){_,url->
-                        markDownCallBack.mentionOnClick(mentionId = url)
+                        richSpanCallBack.mentionOnClick(mentionId = url)
                     }
                     linkSpan.setCurrentStyle(Styles.MENTION)
                     spannableStringBuilder.setSpan(linkSpan,it.startIndex,it.endIndex,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)

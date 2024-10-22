@@ -1,15 +1,17 @@
-package com.example.markdownapp.richtextlib
+package com.example.markdownapp.spanrichlib
 
 import android.graphics.Typeface
-import android.text.Spannable
+import android.text.SpannableStringBuilder
 import android.widget.EditText
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object BlockKit {
 
-    fun EditText.blockKitListGenerate() : BlockKitData {
+    suspend fun EditText.blockKitListGenerate() : BlockKitData {
 
-        val spannableText = text as Spannable
+        val spannableText = SpannableStringBuilder(text)
         /**
          * Filter based on MentionClickableSpan to filter mention and link
          * */
@@ -76,63 +78,66 @@ object BlockKit {
      *  And to group word in between styles ( One style hide to another style )
      * */
 
-    private fun mergeAdjacentMentions(mentions: List<MentionDataClass>, word: String): List<MentionDataClass> {
-        if (mentions.isEmpty()) return emptyList()
+    private suspend fun mergeAdjacentMentions(mentions: List<MentionDataClass>, word: String): List<MentionDataClass> {
+        return withContext(Dispatchers.IO){
+            if (mentions.isEmpty())
+                return@withContext emptyList()
 
-        val mergedMentions = mutableListOf<MentionDataClass>()
-        val lastFilter = mutableListOf<MentionDataClass>()
+            val mergedMentions = mutableListOf<MentionDataClass>()
+            val lastFilter = mutableListOf<MentionDataClass>()
 
-        var current = mentions[0]
+            var current = mentions[0]
 
-        for (next in mentions.drop(1)) {
-            if (current.endIndex == next.startIndex && current.styleFormat == next.styleFormat) {
-                // Merge the two entries
-                current = current.copy(endIndex = next.endIndex, word = current.word + next.word)
-            } else {
-                // Add the current entry to the list and move to the next
-                mergedMentions.add(current)
-                current = next
-            }
-        }
-        // Add the last entry
-        mergedMentions.add(current)
-
-        /**
-         * safety check if one item exceed the another item index*/
-        if (mergedMentions.size>1){
-            mergedMentions.distinctBy { it.startIndex }.forEachIndexed { index, mentionDataClass ->
-            try {
-                val first = mergedMentions[index]
-                val next = mergedMentions[index+1]
-                println("mergeAdjacentMentions  <<<first $first")
-                println("mergeAdjacentMentions  <<<next $next")
-                if (first.endIndex > next.startIndex) {
-                    println("mergeAdjacentMentions  <<satis")
-                    lastFilter.add(MentionDataClass(startIndex = first.startIndex, endIndex = next.startIndex, word = word.substring(first.startIndex,next.startIndex), styleFormat = first.styleFormat))
-                    lastFilter.add(next)
-                }
-                else{
-                    lastFilter.add(first)
-                    lastFilter.add(next)
+            for (next in mentions.drop(1)) {
+                if (current.endIndex == next.startIndex && current.styleFormat == next.styleFormat) {
+                    // Merge the two entries
+                    current = current.copy(endIndex = next.endIndex, word = current.word + next.word)
+                } else {
+                    // Add the current entry to the list and move to the next
+                    mergedMentions.add(current)
+                    current = next
                 }
             }
-            catch (e:Exception){
-                lastFilter.add(mergedMentions.last())
+            // Add the last entry
+            mergedMentions.add(current)
+
+            /**
+             * safety check if one item exceed the another item index*/
+            if (mergedMentions.size>1){
+                mergedMentions.distinctBy { it.startIndex }.forEachIndexed { index, mentionDataClass ->
+                    try {
+                        val first = mergedMentions[index]
+                        val next = mergedMentions[index+1]
+                        println("mergeAdjacentMentions  <<<first $first")
+                        println("mergeAdjacentMentions  <<<next $next")
+                        if (first.endIndex > next.startIndex) {
+                            println("mergeAdjacentMentions  <<satis")
+                            lastFilter.add(MentionDataClass(startIndex = first.startIndex, endIndex = next.startIndex, word = word.substring(first.startIndex,next.startIndex), styleFormat = first.styleFormat))
+                            lastFilter.add(next)
+                        }
+                        else{
+                            lastFilter.add(first)
+                            lastFilter.add(next)
+                        }
+                    }
+                    catch (e:Exception){
+                        lastFilter.add(mergedMentions.last())
+                    }
+                }
             }
+            else{
+                lastFilter.addAll(mergedMentions)
             }
+            println("mergeAdjacentMentions  <<<final ${lastFilter.toDistinctItemsToSort()}")
+            lastFilter.toDistinctItemsToSort()
         }
-        else{
-            lastFilter.addAll(mergedMentions)
-        }
-        println("mergeAdjacentMentions  <<<final ${lastFilter.toDistinctItemsToSort()}")
-        return lastFilter.toDistinctItemsToSort()
     }
 
     /**
      *  Filter item of Plain text without style and order it using word like 0 to word.length order
      * */
 
-    private fun EditText.filterBasedOnIndex(blockKitManages: List<MentionDataClass>): List<MentionDataClass> {
+    private suspend fun EditText.filterBasedOnIndex(blockKitManages: List<MentionDataClass>): List<MentionDataClass> = withContext(Dispatchers.IO){
         var cursorStart = 0
         val remainsList = mutableListOf<MentionDataClass>()
         blockKitManages.forEach { b->
@@ -146,7 +151,7 @@ object BlockKit {
             remainsList.add(MentionDataClass(startIndex = cursorStart, endIndex =text.length, word = text.substring(cursorStart), styleFormat = Styles.PLAIN))
         }
         remainsList.addAll(blockKitManages)
-        return remainsList.toDistinctItemsToSort()
+        remainsList.toDistinctItemsToSort()
     }
 
     private fun List<MentionDataClass>.toDistinctItemsToSort() =

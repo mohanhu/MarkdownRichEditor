@@ -1,6 +1,6 @@
-package com.example.markdownapp.richtextlib
+package com.example.markdownapp.spanrichlib
 
-interface MarkDownCallBack {
+interface RichSpanCallBack {
 
     fun mentionOnClick(mentionId: String)
 

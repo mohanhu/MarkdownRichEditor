@@ -16,7 +16,7 @@
         tools:layout="@layout/fragment_profile" />
     <fragment
         android:id="@+id/testingFragment"
-        android:name="com.example.markdownapp.richtextlib.TestingFragment"
+        android:name="com.example.markdownapp.spanrichlib.TestingFragment"
         android:label="fragment_testing"
         tools:layout="@layout/fragment_testing" />
 </navigation>

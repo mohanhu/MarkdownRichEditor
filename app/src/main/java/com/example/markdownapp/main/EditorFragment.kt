@@ -3,6 +3,7 @@ package com.example.markdownapp.main
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.text.Editable
+import android.text.Spannable
 import android.text.TextWatcher
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -19,23 +20,24 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.markdownapp.R
 import com.example.markdownapp.databinding.FragmentEditorBinding
-import com.example.markdownapp.richtextlib.BlockKit.blockKitListGenerate
-import com.example.markdownapp.richtextlib.BlockKitData
-import com.example.markdownapp.richtextlib.BlockKitManage
-import com.example.markdownapp.richtextlib.MarkDownCallBack
-import com.example.markdownapp.richtextlib.MarkDownStyle.listenCurrentStyleFormat
-import com.example.markdownapp.richtextlib.MarkDownStyle.makeStyleFormat
-import com.example.markdownapp.richtextlib.MarkDownStyle.onTypeStateChange
-import com.example.markdownapp.richtextlib.MarkDownStyle.toggleStyle
-import com.example.markdownapp.richtextlib.NeedPatternList
-import com.example.markdownapp.richtextlib.PATTERN_TYPE
-import com.example.markdownapp.richtextlib.StyleActionBindClick.addBulletList
-import com.example.markdownapp.richtextlib.StyleActionBindClick.addLinkMarkdown
-import com.example.markdownapp.richtextlib.StyleActionBindClick.addMention
-import com.example.markdownapp.richtextlib.StyleActionBindClick.currentLineStartsWithDash
-import com.example.markdownapp.richtextlib.StyleActionBindClick.editAddLink
-import com.example.markdownapp.richtextlib.StyleActionBindClick.editAddMention
-import com.example.markdownapp.richtextlib.Styles
+import com.example.markdownapp.spanrichlib.BlockExport.blockJsonExportToEdit
+import com.example.markdownapp.spanrichlib.BlockKit.blockKitListGenerate
+import com.example.markdownapp.spanrichlib.BlockKitData
+import com.example.markdownapp.spanrichlib.BlockKitManage
+import com.example.markdownapp.spanrichlib.RichSpanCallBack
+import com.example.markdownapp.spanrichlib.RichSpanDownStyle.listenCurrentStyleFormat
+import com.example.markdownapp.spanrichlib.RichSpanDownStyle.makeStyleFormat
+import com.example.markdownapp.spanrichlib.RichSpanDownStyle.onTypeStateChange
+import com.example.markdownapp.spanrichlib.RichSpanDownStyle.toggleStyle
+import com.example.markdownapp.spanrichlib.NeedPatternList
+import com.example.markdownapp.spanrichlib.PATTERN_TYPE
+import com.example.markdownapp.spanrichlib.StyleActionBindClick.addBulletList
+import com.example.markdownapp.spanrichlib.StyleActionBindClick.addLinkMarkdown
+import com.example.markdownapp.spanrichlib.StyleActionBindClick.addMention
+import com.example.markdownapp.spanrichlib.StyleActionBindClick.currentLineStartsWithDash
+import com.example.markdownapp.spanrichlib.StyleActionBindClick.editAddLink
+import com.example.markdownapp.spanrichlib.StyleActionBindClick.editAddMention
+import com.example.markdownapp.spanrichlib.Styles
 import com.example.markdownapp.utils.redirectToChrome
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -44,16 +46,18 @@ import com.google.gson.JsonObject
 import io.noties.markwon.Markwon
 import io.noties.markwon.core.CorePlugin
 import io.noties.markwon.editor.MarkwonEditor
+import io.noties.markwon.editor.MarkwonEditorTextWatcher
 import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
 import io.noties.markwon.linkify.LinkifyPlugin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class EditorFragment : Fragment() , MarkDownCallBack {
+class EditorFragment : Fragment() , RichSpanCallBack {
 
     companion object{
         const val timber = "Typeface.BOLD::class.java"
@@ -97,77 +101,43 @@ class EditorFragment : Fragment() , MarkDownCallBack {
     private fun senderAndReceiver() {
         binding.sendBtn.setOnClickListener {
 
-            val gson = GsonBuilder().disableHtmlEscaping().enableComplexMapKeySerialization().create()
-            val jsonObject = JsonObject()
+            lifecycleScope.launch(Dispatchers.Main) {
+                val gson = GsonBuilder().disableHtmlEscaping().enableComplexMapKeySerialization().create()
+                val jsonObject = JsonObject()
 
-            val blockCode = binding.overlayEditText.blockKitListGenerate()
+                val blockCode = binding.overlayEditText.blockKitListGenerate()
 
-            jsonObject.addProperty("text",blockCode.text)
-            JsonArray().apply {
-                blockCode.block.forEach{ data ->
-                    add((JsonObject().also {
-                        it.addProperty("key",data.key)
-                        it.addProperty("word",data.word)
-                        it.addProperty("pattern",data.pattern)
-                        it.addProperty("styleFormat",data.styleFormat.name)
-                    }))
+                jsonObject.addProperty("text",blockCode.text)
+                JsonArray().apply {
+                    blockCode.block.forEach{ data ->
+                        add((JsonObject().also {
+                            it.addProperty("key",data.key)
+                            it.addProperty("word",data.word)
+                            it.addProperty("pattern",data.pattern)
+                            it.addProperty("styleFormat",data.styleFormat.name)
+                        }))
+                    }
+                }.also { array->
+                    jsonObject.add("block",array)
                 }
-            }.also { array->
-                jsonObject.add("block",array)
-            }
 
-            println("EditText.blockKitListGenerate() >>> ${blockCode.block}")
-            println("EditText.blockKitListGenerate() >>> $jsonObject")
+                println("EditText.blockKitListGenerate() >>> ${blockCode.block}")
+                println("EditText.blockKitListGenerate() >>> $jsonObject")
 
-            mentionDataClass = gson.fromJson(jsonObject,BlockKitData::class.java).block.toMutableList()
-            println("$timber >>> preview in mention data class >>> $mentionDataClass")
-            println("$timber >>> preview json file file mention >>> $jsonObject")
-            apiEditData = jsonObject
+                mentionDataClass = gson.fromJson(jsonObject,BlockKitData::class.java).block.toMutableList()
+                println("$timber >>> preview in mention data class >>> $mentionDataClass")
+                println("$timber >>> preview json file file mention >>> $jsonObject")
+                apiEditData = jsonObject
 
-            CoroutineScope(Dispatchers.Main).launch {
                 buildSentenceFromMentions(blockCode.block)
+
             }
 //            binding.overlayEditText.removeAllSpans()
         }
 
         binding.tvMarkDown.setOnClickListener {
-
             currentTypeStyle  = Styles.PLAIN
-
-            val blockKitData = Gson().fromJson(apiEditData,BlockKitData::class.java)
-
-            var blockKitManage = blockKitData.block.map { it.toBlockKitManage() }
-
-            var makeString = ""
-            blockKitData.block.forEachIndexed { index, head ->
-                blockKitManage = blockKitManage.mapIndexed { i, b ->
-                    if (i == index) {
-                        b.copy(startIndex = makeString.length, endIndex = makeString.length + b.word.length)
-                    } else {
-                        b
-                    }
-                }
-                makeString += head.word
-            }
-
-            binding.overlayEditText.setText(makeString,TextView.BufferType.SPANNABLE)
-
-            blockKitManage.sortedBy { it.startIndex }.forEach {
-                if (it.styleFormat == Styles.MENTION){
-                    binding.overlayEditText.editAddMention(it.word,it.key.toLong(),it.startIndex,it.endIndex)
-                }
-                if ( it.styleFormat == Styles.LINK){
-                    binding.overlayEditText.editAddLink(it.word,it.key,it.startIndex,it.endIndex)
-                }
-                if (it.styleFormat == Styles.BOLD){
-                    binding.overlayEditText.makeStyleFormat(it.word,it.styleFormat,it.startIndex,it.endIndex)
-                }
-                if (it.styleFormat == Styles.ITALIC){
-                    binding.overlayEditText.makeStyleFormat(it.word,it.styleFormat,it.startIndex,it.endIndex)
-                }
-                println("mentionDataClass.sortedByDescending >>> ${it.styleFormat}")
-            }
-//            binding.overlayEditText.text?.insert(makeString.length," ")
+            binding.overlayEditText.blockJsonExportToEdit(apiEditData.toString())
         }
     }
 
@@ -176,6 +146,12 @@ class EditorFragment : Fragment() , MarkDownCallBack {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+                lifecycleScope.launch(Dispatchers.Main){
+                    val blockJsonFile = binding.overlayEditText.blockKitListGenerate()
+                    println("binding.overlayEditText.blockKitListGenerate >>> 123 >>>$blockJsonFile")
+                }
+
                 val cursor = binding.overlayEditText.selectionStart?.takeIf { it>=0 }?:0
                 if(LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
                     println("binding.overlayEditText.addTextChangedListener >>> satisfied ${binding.overlayEditText.selectionStart}")
@@ -210,9 +186,9 @@ class EditorFragment : Fragment() , MarkDownCallBack {
 
         val editor = MarkwonEditor.builder(markwon).build()
 
-//        binding.overlayEditText.addTextChangedListener(MarkwonEditorTextWatcher.withProcess(editor))
-//        binding.overlayEditText.setTextIsSelectable(true)
-//        binding.overlayEditText.setSpannableFactory(Spannable.Factory.getInstance())
+        binding.overlayEditText.addTextChangedListener(MarkwonEditorTextWatcher.withProcess(editor))
+        binding.overlayEditText.setTextIsSelectable(true)
+        binding.overlayEditText.setSpannableFactory(Spannable.Factory.getInstance())
     }
 
     @SuppressLint("ClickableViewAccessibility")

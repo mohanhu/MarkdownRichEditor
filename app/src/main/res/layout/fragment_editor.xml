@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <com.example.markdownapp.richtextlib.RichSpanText
+    <com.example.markdownapp.spanrichlib.RichSpanText
         android:id="@+id/tv_mark_down"
         android:layout_width="match_parent"
         android:layout_height="@dimen/_200sdp"
@@ -26,12 +26,13 @@
         android:hint="@string/message_at"
         android:inputType="textMultiLine"
         android:maxHeight="@dimen/_100sdp"
+        android:background="@color/transparent"
         android:overScrollMode="always"
         android:padding="16dp"
         android:scrollbars="vertical"
         android:textColor="@color/white"
         android:textColorHint="@color/light_grey"
-        android:textSize="@dimen/_12sdp"
+        android:textSize="@dimen/_11sdp"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintEnd_toStartOf="@+id/selector"
         app:layout_constraintStart_toStartOf="parent" />

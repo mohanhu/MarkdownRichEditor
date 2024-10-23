@@ -33,3 +33,10 @@ fun redirectToChrome(context: Activity, urls: String) {
         } catch (e: Exception) {
         }
     }
+
+fun safeCall(action:()->Unit){
+    try {
+        action()
+    }
+    catch (e:Exception){}
+}

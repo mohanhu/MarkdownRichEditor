@@ -2,6 +2,7 @@ package com.example.markdownapp.spanrichlib
 
 import android.widget.EditText
 import android.widget.TextView
+import com.example.markdownapp.R
 import com.example.markdownapp.spanrichlib.RichSpanDownStyle.makeStyleFormat
 import com.example.markdownapp.spanrichlib.StyleActionBindClick.editAddLink
 import com.example.markdownapp.spanrichlib.StyleActionBindClick.editAddMention
@@ -41,4 +42,24 @@ object BlockExport {
         }
     }
 
+    fun TextView.blockJsonToExportDataTextView(blockJson: String): List<MentionDataClass> {
+        val updateFormat = Gson().fromJson(blockJson, BlockKitData::class.java)
+        var blockList = updateFormat.block.map { it.toBlockKitManage() }
+        var makeString = ""
+        updateFormat.block.forEachIndexed { index, blockKitManage ->
+            blockList = blockList.mapIndexed { i, b ->
+                if (i == index) {
+                    b.copy(
+                        startIndex = makeString.length,
+                        endIndex = makeString.length + b.word.length
+                    )
+                } else {
+                    b
+                }
+            }
+            makeString += blockKitManage.word
+        }
+        text = makeString
+        return blockList
+    }
 }

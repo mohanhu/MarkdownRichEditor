@@ -30,6 +30,7 @@
         android:overScrollMode="always"
         android:padding="16dp"
         android:scrollbars="vertical"
+        android:maxLength="10"
         android:textColor="@color/white"
         android:textColorHint="@color/light_grey"
         android:textSize="@dimen/_11sdp"

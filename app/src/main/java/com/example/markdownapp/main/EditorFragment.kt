@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.markdownapp.R
 import com.example.markdownapp.databinding.FragmentEditorBinding
 import com.example.markdownapp.spanrichlib.BlockExport.blockJsonExportToEdit
+import com.example.markdownapp.spanrichlib.BlockExport.blockJsonToExportDataTextView
 import com.example.markdownapp.spanrichlib.BlockKit.blockKitListGenerate
 import com.example.markdownapp.spanrichlib.BlockKitData
 import com.example.markdownapp.spanrichlib.BlockKitManage
@@ -103,10 +104,10 @@ class EditorFragment : Fragment() , RichSpanCallBack {
 
             lifecycleScope.launch(Dispatchers.Main) {
                 val gson = GsonBuilder().disableHtmlEscaping().enableComplexMapKeySerialization().create()
-                val jsonObject = JsonObject()
 
                 val blockCode = binding.overlayEditText.blockKitListGenerate()
 
+                val jsonObject = JsonObject()
                 jsonObject.addProperty("text",blockCode.text)
                 JsonArray().apply {
                     blockCode.block.forEach{ data ->
@@ -252,23 +253,8 @@ class EditorFragment : Fragment() , RichSpanCallBack {
     }
 
     private suspend fun buildSentenceFromMentions(mentionList: List<BlockKitManage>) {
-        val updateFormat = Gson().fromJson(apiEditData,BlockKitData::class.java)
-        var blockList = mentionList.map { it.toBlockKitManage() }
-        println("buildSentenceFromMentions 2.0 >>>>>$blockList")
+        val blockList = binding.tvMarkDown.blockJsonToExportDataTextView(apiEditData.toString())
 
-        var makeString = ""
-        updateFormat.block.forEachIndexed { index, blockKitManage ->
-            blockList = blockList.mapIndexed { i, b ->
-                if (i == index) {
-                    b.copy(startIndex = makeString.length, endIndex = makeString.length + b.word.length)
-                } else {
-                    b
-                }
-            }
-            makeString += blockKitManage.word
-        }
-
-        binding.tvMarkDown.text = makeString
         val needPatternList = listOf<NeedPatternList>(
             NeedPatternList(neededType = PATTERN_TYPE.URL_PATTERN, R.color.button_blue_color),
         )

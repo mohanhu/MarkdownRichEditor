@@ -1,4 +1,4 @@
-package com.example.markdownappapp.richlib
+package com.example.markdownapp.richtextlib
 
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 data class NeedPatternList(
-    val neededType:PATTERN_TYPE,
+    val neededType: PATTERN_TYPE,
     val color:Int
 )
 
@@ -42,16 +42,19 @@ fun addToList(
     patternString: MutableList<PatternString>,
     pattern: NeedPatternList
 ) {
-    patternString.add(PatternString(
+    patternString.add(
+        PatternString(
         patternValue = matchResult.value,
         patternType = pattern.neededType,
         start = matchResult.range.first,
         end = matchResult.range.last,
         color = pattern.color
-    ))
+    )
+    )
 }
 
 private val Context.inputManager: InputMethodManager get() = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
 fun EditText.hideKeyBoard (){
     post{
         requestFocus()

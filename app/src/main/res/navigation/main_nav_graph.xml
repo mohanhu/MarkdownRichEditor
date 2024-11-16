@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_nav_graph"
     app:startDestination="@id/editorFragment">
 
     <fragment
         android:id="@+id/editorFragment"
-        android:name="com.example.markdownapp.EditorFragment"
+        android:name="com.example.markdownapp.main.EditorFragment"
         android:label="EditorFragment" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.markdownapp.main.ProfileFragment"
+        android:label="fragment_profile"
+        tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/testingFragment"
+        android:name="com.example.markdownapp.richtextlib.TestingFragment"
+        android:label="fragment_testing"
+        tools:layout="@layout/fragment_testing" />
 </navigation>

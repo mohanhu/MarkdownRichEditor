@@ -23,37 +23,93 @@ object StyleActionBindClick {
 //        Check the starting style is bullet
         val isBulletStyle = lines.first().trimStart().startsWith("•")
 
+        var currentIndex = start
+
         // Check if the cursor is at the start of a new line
         val isAtLineStart = start == 0 || text[start - 1] == '\n'
 
-        // Toggle bullets: If a line starts with a bullet, remove it; otherwise, add it
-        val bulletListText = if (isAtLineStart) {
-            lines.joinToString("\n") { line ->
-                if (line.trimStart().startsWith("•") && isBulletStyle) {
-                    // Remove the bullet if it starts with "•"
-                    line.trimStart().removePrefix("• ").trimStart()
-                } else {
-                    // Add a bullet if it doesn't start with "•"
-                    "• $line"
+        if (isBulletStyle){
+            currentIndex+=2
+            lines.forEachIndexed { index, s ->
+                if (s.startsWith("•")) {
+                    text?.delete(currentIndex-2,currentIndex)
+                    currentIndex+=s.length-1
+                }
+                else{
+                    currentIndex+=s.length
                 }
             }
-        } else {
-            "\n" + lines.joinToString("\n") { line ->
-                if (line.trimStart().startsWith("•") && isBulletStyle) {
-                    // Remove the bullet if it starts with "•"
-                    line.trimStart().removePrefix("• ").trimStart()
-                } else {
-                    // Add a bullet if it doesn't start with "•"
-                    "• $line"
+        }
+        else{
+            if (isAtLineStart){
+                lines.forEachIndexed { index, s ->
+                    text?.insert(currentIndex,"• ")
+                    currentIndex += s.length+3
+                }
+            }
+            else{
+                text?.insert(currentIndex,"\n")
+                currentIndex++
+                lines.forEachIndexed { index, s ->
+                    text?.insert(currentIndex,"• ")
+                    currentIndex += s.length+3
                 }
             }
         }
 
-        // Replace the selected text with the modified bullet list
-        text.replace(start, end, bulletListText)
+        /**
+         * Avoid other style remove issue
+         * */
 
-        // Adjust the cursor position after inserting or removing bullets
-        setSelection(start + bulletListText.length)
+//        // Toggle bullets: If a line starts with a bullet, remove it; otherwise, add it
+//        val bulletListText = if (isAtLineStart) {
+//            lines.joinToString("\n") { line ->
+//                if (line.trimStart().startsWith("•") && isBulletStyle) {
+//                    // Remove the bullet if it starts with "•"
+//                    line.trimStart().removePrefix("• ").trimStart()
+//                } else {
+//                    // Add a bullet if it doesn't start with "•"
+//                    "• $line"
+//                }
+//            }
+//        } else {
+//            "\n" + lines.joinToString("\n") { line ->
+//                if (line.trimStart().startsWith("•") && isBulletStyle) {
+//                    // Remove the bullet if it starts with "•"
+//                    line.trimStart().removePrefix("• ").trimStart()
+//                } else {
+//                    // Add a bullet if it doesn't start with "•"
+//                    "• $line"
+//                }
+//            }
+//        }
+
+//        // Replace the selected text with the modified bullet list
+//        text.replace(start, end, bulletListText)
+//
+//        // Adjust the cursor position after inserting or removing bullets
+//        setSelection(start + bulletListText.length)
+    }
+
+    fun EditText.currentLineStartsWithDash(): Boolean {
+        val cursorPos = selectionStart?.takeIf { it>=0 }?:0
+        println("currentLineStartsWithDash 0 <<<<$cursorPos")
+        val textBeforeCursor = text.toString().substring(0, cursorPos)
+
+        if (!textBeforeCursor.endsWith("\n"))
+            return false
+        // Get the current line
+        val lines = textBeforeCursor.trimIndent().split("\n")
+        val currentLine = lines.lastOrNull() ?: ""
+
+        return if (currentLine.trimStart().startsWith('•')){
+            val lastBullet = currentLine.indexOfLast { it == '•' }+1
+            println("currentLineStartsWithDash checkEmpty ${currentLine.substring(lastBullet).trimIndent().isEmpty()}")
+            currentLine.substring(lastBullet).trimIndent().isNotEmpty()
+        }
+        else {
+            false
+        }
     }
 
     fun EditText.addNumberList() {
@@ -69,92 +125,71 @@ object StyleActionBindClick {
 
         val isAtLineStart = start == 0 || text[start - 1] == '\n'
 
-        // Toggle numbering: If a line starts with a number followed by a period, remove it; otherwise, add numbering
-        val numberListText = if (isAtLineStart) {
-            lines.mapIndexed { index, line ->
-                val trimmedLine = line.trimStart()
-                val regex = Regex("""^\d+\.\s""")  // Regex to check if the line starts with a number and a period (e.g., "1. ")
-                if (regex.containsMatchIn(trimmedLine) && isNumberStyle) {
-                    // Remove the numbering (e.g., "1. ") if it starts with a number
-                    trimmedLine.replaceFirst(regex, "").trimStart()
-                } else {
-                    // Add numbering if the line does not start with a number
-                    "${index + 1}. $line"
-                }
-            }.joinToString("\n")
-        } else {
-            "\n" + lines.mapIndexed { index, line ->
-                val trimmedLine = line.trimStart()
-                val regex = Regex("""^\d+\.\s""")
+        var currentIndex = start
 
-                if (regex.containsMatchIn(trimmedLine) && isNumberStyle) {
-                    // Remove the numbering
-                    trimmedLine.replaceFirst(regex, "").trimStart()
-                } else {
-                    "${index + 1}. $line"
-                }
-            }.joinToString("\n")
-        }
-
-        // Replace the selected text with the toggled numbered list
-        text.replace(start, end, numberListText)
-
-        // Adjust the cursor position after modifying the list
-        setSelection(start + numberListText.length)
-    }
-
-    fun EditText.currentLineStartsWithDash(): Boolean {
-        val cursorPos = selectionStart?.takeIf { it>=0 }?:0
-        println("currentLineStartsWithDash 0 <<<<$cursorPos")
-        val textBeforeCursor = text.toString().substring(0, cursorPos)
-
-        if (!textBeforeCursor.endsWith("\n"))
-            return false
-        // Get the current line
-        val lines = textBeforeCursor.trimIndent().split("\n")
-        val currentLine = lines.lastOrNull() ?: ""
-
-        return if (currentLine.trimStart().startsWith('•')){
-            val lastBullet = textBeforeCursor.indexOfLast { it == '•' }+1
-            println("currentLineStartsWithDash checkEmpty ${textBeforeCursor.substring(lastBullet,cursorPos).trimIndent().isEmpty()}")
-            textBeforeCursor.substring(lastBullet,cursorPos).trimIndent().isNotEmpty()
-        }
-        else {
-            false
-        }
-    }
-
-    fun EditText.currentLineStartsWithNumberedList(): Pair<Boolean,Int> {
-        val cursorPos = selectionStart.takeIf { it >= 0 } ?: 0
-        println("currentLineStartsWithNumberedList cursorPos <<<< $cursorPos")
-        val textBeforeCursor = text.toString().substring(0, cursorPos)
-
-        if (!textBeforeCursor.endsWith("\n"))
-            return Pair(false,0)
-
-        // Get the current line
-        val lines = textBeforeCursor.trimIndent().split("\n")
-        val currentLine = lines.lastOrNull() ?: ""
-
-        // Check if the line starts with a number followed by a dot (e.g., "1. ")
         val regex = Regex("""^\d+\.\s""")
 
-        return if (regex.containsMatchIn(currentLine.trimStart())) {
-            // Find the last numbered list occurrence (e.g., "1. ", "2. ", etc.)
-            val lastNumberedIndex = textBeforeCursor.indexOfLast { it.isDigit() }+2
-            // Ensure there's at least one space after the number and check if the remaining part is not empty
-            println("currentLineStartsWithNumberedList checkEmpty ${textBeforeCursor.substring(lastNumberedIndex, cursorPos).trimIndent()}")
-
-            val isCharHaveSomething = textBeforeCursor.substring(lastNumberedIndex, cursorPos).trimIndent().isNotEmpty()
-
-            val matchResult = regex.find(currentLine.trimStart())
-            println("currentLineStartsWithNumberedList matchResult ${matchResult?.groupValues?.get(0)?.replace(".","")?.replace(Regex("[.\\s]"), "")?.toInt()}")
-            val number = matchResult?.groupValues?.get(0)?.replace(".","")?.replace(Regex("[.\\s]"), "")?.toIntOrNull()?:0
-            println("currentLineStartsWithNumberedList number $number")
-            Pair(isCharHaveSomething,number+1)
-        } else {
-            Pair(false,0)
+        if (isNumberStyle){
+            currentIndex+=3
+            lines.forEachIndexed { index, s ->
+                if (regex.containsMatchIn(s)) {
+                    text?.delete(currentIndex-3,currentIndex)
+                    currentIndex+=s.length-2
+                }
+                else{
+                    currentIndex+=s.length
+                }
+            }
         }
+        else{
+            if (isAtLineStart){
+                lines.forEachIndexed { index, s ->
+                    text?.insert(currentIndex,"${index+1}. ")
+                    currentIndex += s.length+4
+                }
+            }
+            else{
+                text?.insert(currentIndex,"\n")
+                currentIndex++
+                lines.forEachIndexed { index, s ->
+                    text?.insert(currentIndex,"${index+1}. ")
+                    currentIndex += s.length+4
+                }
+            }
+        }
+
+//        // Toggle numbering: If a line starts with a number followed by a period, remove it; otherwise, add numbering
+//        val numberListText = if (isAtLineStart) {
+//            lines.mapIndexed { index, line ->
+//                val trimmedLine = line.trimStart()
+//                val regex = Regex("""^\d+\.\s""")  // Regex to check if the line starts with a number and a period (e.g., "1. ")
+//                if (regex.containsMatchIn(trimmedLine) && isNumberStyle) {
+//                    // Remove the numbering (e.g., "1. ") if it starts with a number
+//                    trimmedLine.replaceFirst(regex, "").trimStart()
+//                } else {
+//                    // Add numbering if the line does not start with a number
+//                    "${index + 1}. $line"
+//                }
+//            }.joinToString("\n")
+//        } else {
+//            "\n" + lines.mapIndexed { index, line ->
+//                val trimmedLine = line.trimStart()
+//                val regex = Regex("""^\d+\.\s""")
+//
+//                if (regex.containsMatchIn(trimmedLine) && isNumberStyle) {
+//                    // Remove the numbering
+//                    trimmedLine.replaceFirst(regex, "").trimStart()
+//                } else {
+//                    "${index + 1}. $line"
+//                }
+//            }.joinToString("\n")
+//        }
+//
+//        // Replace the selected text with the toggled numbered list
+//        text.replace(start, end, numberListText)
+//
+//        // Adjust the cursor position after modifying the list
+//        setSelection(start + numberListText.length)
     }
 
     fun EditText.addMention(mention: String, mentionId: String, index:(Int, Int)->Unit) {
@@ -243,5 +278,4 @@ object StyleActionBindClick {
         setText(spannable, TextView.BufferType.SPANNABLE)
         movementMethod = LinkMovementMethod.getInstance()
     }
-
 }

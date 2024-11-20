@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.viewModels
@@ -19,21 +20,23 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.markdownapp.R
 import com.example.markdownapp.databinding.FragmentEditorBinding
+import com.example.markdownapp.richtextlib.AdvanceStyleFormat
 import com.example.markdownapp.richtextlib.BlockKit.blockKitListGenerate
 import com.example.markdownapp.richtextlib.BlockKitData
 import com.example.markdownapp.richtextlib.BlockKitManage
 import com.example.markdownapp.richtextlib.MarkDownCallBack
+import com.example.markdownapp.richtextlib.MarkDownStyle.advanceMakeStyle
 import com.example.markdownapp.richtextlib.MarkDownStyle.makeStyleFormat
 import com.example.markdownapp.richtextlib.MarkDownStyle.onTypeStateChange
 import com.example.markdownapp.richtextlib.MarkDownStyle.toggleStyle
 import com.example.markdownapp.richtextlib.NeedPatternList
+import com.example.markdownapp.richtextlib.NumberOrdering.formatNumberBackward
+import com.example.markdownapp.richtextlib.NumberOrdering.formatNumberForward
 import com.example.markdownapp.richtextlib.PATTERN_TYPE
 import com.example.markdownapp.richtextlib.StyleActionBindClick.addBulletList
-import com.example.markdownapp.richtextlib.StyleActionBindClick.addLinkMarkdown
 import com.example.markdownapp.richtextlib.StyleActionBindClick.addMention
 import com.example.markdownapp.richtextlib.StyleActionBindClick.addNumberList
 import com.example.markdownapp.richtextlib.StyleActionBindClick.currentLineStartsWithDash
-import com.example.markdownapp.richtextlib.StyleActionBindClick.currentLineStartsWithNumberedList
 import com.example.markdownapp.richtextlib.StyleActionBindClick.editAddLink
 import com.example.markdownapp.richtextlib.StyleActionBindClick.editAddMention
 import com.example.markdownapp.richtextlib.Styles
@@ -196,12 +199,17 @@ class EditorFragment : Fragment() , MarkDownCallBack {
             override fun afterTextChanged(s: Editable?) {
                 val cursor = binding.overlayEditText.selectionStart?.takeIf { it>=0 }?:0
                 if (binding.overlayEditText.currentLineStartsWithDash() && LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
-                    binding.overlayEditText.text?.insert(cursor, "• ")
+                    binding.overlayEditText.post {
+                        binding.overlayEditText.text?.insert(cursor, "• ")
+                    }
                 }
-//                val isNumberListStart = binding.overlayEditText.currentLineStartsWithNumberedList()
-//                if ( isNumberListStart.first && LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
-//                    binding.overlayEditText.text?.insert(cursor, isNumberListStart.second.toString()+". ")
-//                }
+
+                if (LAST_RICH_EDITOR_CURSOR_POSITION<cursor){
+                    binding.overlayEditText.formatNumberForward(cursor)
+                }
+                if(LAST_RICH_EDITOR_CURSOR_POSITION>cursor){
+                    binding.overlayEditText.formatNumberBackward(cursor)
+                }
                 LAST_RICH_EDITOR_CURSOR_POSITION = cursor
             }
         })
@@ -250,7 +258,8 @@ class EditorFragment : Fragment() , MarkDownCallBack {
         }
 
         binding.mentionButton.setOnClickListener {
-            binding.rvOptions.visibility = View.VISIBLE
+//            binding.rvOptions.visibility = View.VISIBLE
+            binding.overlayEditText.advanceMakeStyle(AdvanceStyleFormat.UnderLine)
         }
 
         binding.linkButton.setOnClickListener {
@@ -322,3 +331,5 @@ class EditorFragment : Fragment() , MarkDownCallBack {
         redirectToChrome(requireActivity(), urls = url)
     }
 }
+
+

@@ -53,6 +53,35 @@ object MarkDownStyle {
         setSelection(start, start+selectorTextAndUpdate.length)
     }
 
+    fun EditText.advanceMakeStyle(advanceStyleFormat: AdvanceStyleFormat) {
+        val start = selectionStart.takeIf { it>=0 }?:0
+        val end = selectionEnd.takeIf { it>=0 }?:0
+        val selectorTextAndUpdate = text.substring(start,end)
+        val spannableText = text as Spannable
+
+        if (selectorTextAndUpdate.isEmpty() || start==end ){
+            text?.insert(start," ")
+            spannableText.setSpan(AdvanceBlockMakeSpan(advanceStyleFormat," "),start,start+1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSelection(start,start+1)
+            return
+        }
+        println("MarkDownStyle EditText.toggleStyle >>> $selectorTextAndUpdate")
+
+        // Check if the selected text is already style
+        val spans = spannableText.getSpans(start, end, AdvanceBlockMakeSpan::class.java)
+        var isStyle = false
+
+        spans.forEach { span ->
+            if (span.getStyleName() == advanceStyleFormat) {
+                isStyle = true
+            }
+            spannableText.removeSpan(span) // Remove existing style span
+        }
+        // If the text is not style, apply the span
+        if (!isStyle) {
+            spannableText.setSpan(AdvanceBlockMakeSpan(advanceStyleFormat,selectorTextAndUpdate), start, start+selectorTextAndUpdate.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
 
     fun EditText.makeStyleFormat(mention: String,style:Styles,start:Int,end:Int) {
         val spannable = text as Spannable
@@ -61,63 +90,6 @@ object MarkDownStyle {
             Styles.ITALIC -> spannable.setSpan(StyleMakeSpan(Typeface.ITALIC,mention), start, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
             else -> {}
         }
-//        setText(spannable, TextView.BufferType.SPANNABLE)
-//        setSelection(start + mention.length)
-    }
-
-    fun EditText.handleInBetweenStylesChar(start: Int, count: Int, currentTypeStyle: Styles) {
-      try {
-          // Use Editable directly to avoid recreating Spannable unnecessarily
-          val editableText = SpannableStringBuilder(text)
-
-          val style = when (currentTypeStyle) {
-              Styles.BOLD -> Typeface.BOLD
-              Styles.ITALIC -> Typeface.ITALIC
-              else -> Typeface.NORMAL
-          }
-
-          // Get spans at the affected range
-          val styleSpans = editableText.getSpans(start, start + count, StyleMakeSpan::class.java)
-
-          // Process each span in the affected range
-          styleSpans.map { span ->
-              val spanStart = editableText.getSpanStart(span)
-              val spanEnd = editableText.getSpanEnd(span)
-
-              if (start in spanStart..spanEnd) {
-
-                  if (span.style!=style){
-                      return@map
-                  }
-
-                  // Ensure we're not inside a MentionClickableSpan
-                  val mentionClickableSpans = editableText.getSpans(spanStart, spanEnd, MentionClickableSpan::class.java)
-                  if (mentionClickableSpans.isNotEmpty()) {
-                      return
-                  }
-
-                  // Determine the style and apply only if needed
-                  when (span.style) {
-                      Typeface.BOLD -> {
-                          val latestText = editableText.substring(spanStart, spanEnd + count - 1)
-                          editableText.removeSpan(span)
-                          editableText.setSpan(StyleMakeSpan(Typeface.BOLD, latestText), spanStart, spanStart + latestText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                      }
-                      Typeface.ITALIC -> {
-                          val latestText = editableText.substring(spanStart, spanEnd + count - 1)
-                          editableText.removeSpan(span)
-                          editableText.setSpan(StyleMakeSpan(Typeface.BOLD, latestText), spanStart, spanStart + latestText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                      }
-                      Typeface.NORMAL -> {
-                          return // No need to process normal text
-                      }
-                  }
-              }
-          }
-          // Ensure the change doesn't trigger recursive text updates
-          setText(editableText, TextView.BufferType.SPANNABLE)
-          setSelection(start+count)
-      }catch (e:Exception){}
     }
 
     fun EditText.removeAllSpans(){
@@ -173,5 +145,60 @@ object MarkDownStyle {
                 editableText.setSpan(StyleMakeSpan(style, editableText.substring(start - 1, start)), start - 1, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
         }}
+    }
+
+    fun EditText.handleInBetweenStylesChar(start: Int, count: Int, currentTypeStyle: Styles) {
+        try {
+            // Use Editable directly to avoid recreating Spannable unnecessarily
+            val editableText = SpannableStringBuilder(text)
+
+            val style = when (currentTypeStyle) {
+                Styles.BOLD -> Typeface.BOLD
+                Styles.ITALIC -> Typeface.ITALIC
+                else -> Typeface.NORMAL
+            }
+
+            // Get spans at the affected range
+            val styleSpans = editableText.getSpans(start, start + count, StyleMakeSpan::class.java)
+
+            // Process each span in the affected range
+            styleSpans.map { span ->
+                val spanStart = editableText.getSpanStart(span)
+                val spanEnd = editableText.getSpanEnd(span)
+
+                if (start in spanStart..spanEnd) {
+
+                    if (span.style!=style){
+                        return@map
+                    }
+
+                    // Ensure we're not inside a MentionClickableSpan
+                    val mentionClickableSpans = editableText.getSpans(spanStart, spanEnd, MentionClickableSpan::class.java)
+                    if (mentionClickableSpans.isNotEmpty()) {
+                        return
+                    }
+
+                    // Determine the style and apply only if needed
+                    when (span.style) {
+                        Typeface.BOLD -> {
+                            val latestText = editableText.substring(spanStart, spanEnd + count - 1)
+                            editableText.removeSpan(span)
+                            editableText.setSpan(StyleMakeSpan(Typeface.BOLD, latestText), spanStart, spanStart + latestText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        }
+                        Typeface.ITALIC -> {
+                            val latestText = editableText.substring(spanStart, spanEnd + count - 1)
+                            editableText.removeSpan(span)
+                            editableText.setSpan(StyleMakeSpan(Typeface.BOLD, latestText), spanStart, spanStart + latestText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        }
+                        Typeface.NORMAL -> {
+                            return // No need to process normal text
+                        }
+                    }
+                }
+            }
+            // Ensure the change doesn't trigger recursive text updates
+            setText(editableText, TextView.BufferType.SPANNABLE)
+            setSelection(start+count)
+        }catch (e:Exception){}
     }
 }

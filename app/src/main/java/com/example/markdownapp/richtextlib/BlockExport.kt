@@ -37,12 +37,7 @@ object BlockExport {
                if ( it.styleFormat == Styles.LINK){
                    editAddLink(it.word,it.key,it.startIndex,it.endIndex)
                }
-               if (it.styleFormat == Styles.BOLD){
-                   makeStyleFormat(it.word,it.styleFormat,it.startIndex,it.endIndex)
-               }
-               if (it.styleFormat == Styles.ITALIC){
-                   makeStyleFormat(it.word,it.styleFormat,it.startIndex,it.endIndex)
-               }
+               makeStyleFormat(it.word,it.styleFormat,it.startIndex,it.endIndex)
                println("mentionDataClass.sortedByDescending >>> ${it.styleFormat}")
            }
        }

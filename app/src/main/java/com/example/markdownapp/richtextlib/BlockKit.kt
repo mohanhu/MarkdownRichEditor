@@ -1,5 +1,6 @@
 package com.example.markdownapp.richtextlib
 
+import android.graphics.Color
 import android.graphics.Typeface
 import android.text.Spannable
 import android.widget.EditText
@@ -41,13 +42,20 @@ object BlockKit {
          * */
 
         val boldSpan = spannableText.getSpans(0 , spannableText.length, StyleMakeSpan::class.java)
-        boldSpan.filter { span -> span.style == Typeface.BOLD || span.style== Typeface.ITALIC }
+        boldSpan.filter {
+            span -> span.getStyleNameName() == Styles.BOLD
+                || span.getStyleNameName()== Styles.ITALIC
+                || span.getStyleNameName()== Styles.UNDER_LINE
+                || span.getStyleNameName()== Styles.STRIKE
+        }
             .map { span->
                 val start = spannableText.getSpanStart(span)
                 val end = spannableText.getSpanEnd(span)
-                val styleFormat = when(span.style){
-                    Typeface.ITALIC -> Styles.ITALIC
-                    Typeface.BOLD -> Styles.BOLD
+                val styleFormat = when(span.getStyleNameName()){
+                    Styles.ITALIC -> Styles.ITALIC
+                    Styles.BOLD -> Styles.BOLD
+                    Styles.UNDER_LINE -> Styles.UNDER_LINE
+                    Styles.STRIKE -> Styles.STRIKE
                     else -> Styles.PLAIN
                 }
                 val original = spannableText.substring(start,end)
@@ -190,10 +198,16 @@ data class MentionDataClass (
     )
 }
 
-enum class Styles{
-    BOLD,
-    ITALIC,
+enum class Styles(
+    val color: Int= Color.WHITE,
+    val backGround:Int=Color.TRANSPARENT,
+    val typeface: Int = Typeface.NORMAL
+){
+    BOLD(typeface = Typeface.BOLD),
+    ITALIC(typeface = Typeface.ITALIC),
     MENTION,
     LINK,
+    STRIKE,
+    UNDER_LINE,
     PLAIN
 }

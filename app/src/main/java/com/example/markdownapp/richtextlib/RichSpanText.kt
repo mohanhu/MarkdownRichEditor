@@ -152,10 +152,16 @@ class RichSpanText(context: Context, attributeSet: AttributeSet) : AppCompatText
                     spannableStringBuilder.setSpan(BackgroundColorSpan(ContextCompat.getColor(context, R.color.backdrop_primary_old)), it.startIndex, it.startIndex+it.word.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
                 if ( it.styleFormat == Styles.BOLD) {
-                    spannableStringBuilder.setSpan(StyleMakeSpan(Typeface.BOLD,""),it.startIndex,it.endIndex,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    spannableStringBuilder.setSpan(StyleMakeSpan(Styles.BOLD,""),it.startIndex,it.endIndex,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
                 if ( it.styleFormat == Styles.ITALIC) {
-                    spannableStringBuilder.setSpan(StyleMakeSpan(Typeface.ITALIC,""),it.startIndex,it.endIndex,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    spannableStringBuilder.setSpan(StyleMakeSpan(Styles.ITALIC,""),it.startIndex,it.endIndex,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+                if ( it.styleFormat == Styles.UNDER_LINE) {
+                    spannableStringBuilder.setSpan(StyleMakeSpan(Styles.UNDER_LINE,""),it.startIndex,it.endIndex,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+                if ( it.styleFormat == Styles.STRIKE) {
+                    spannableStringBuilder.setSpan(StyleMakeSpan(Styles.STRIKE,""),it.startIndex,it.endIndex,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
                 spannableStringBuilder = SpannableStringBuilder(spannableStringBuilder)
                 setText(spannableStringBuilder,BufferType.SPANNABLE)

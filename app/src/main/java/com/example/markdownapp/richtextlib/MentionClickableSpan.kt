@@ -6,6 +6,9 @@ import android.text.style.ClickableSpan
 import android.text.style.StyleSpan
 import android.view.View
 
+/**
+ * Mention & Link View
+ * */
 class MentionClickableSpan(
     private val mentionName: String,
     private val mentionId: String,
@@ -36,39 +39,37 @@ class MentionClickableSpan(
     fun getMentionName(): String = mentionName
 }
 
+
+/**
+ * Bold,Italic,Strike & Underline
+ * */
 class StyleMakeSpan (
-    private val typeface: Int,
+    private val styles: Styles,
     private val selectedText : String
-) : StyleSpan(typeface) {
+) : StyleSpan(styles.typeface) {
+   
+   
     override fun updateDrawState(ds: TextPaint) {
         super.updateDrawState(ds)
-        ds.typeface = Typeface.create(ds.typeface, typeface)
+        
+        ds.typeface = Typeface.create(ds.typeface, styles.typeface)
+        when(styles){
+            Styles.BOLD -> Unit
+            Styles.ITALIC -> Unit
+            Styles.MENTION -> Unit
+            Styles.LINK -> Unit
+            Styles.STRIKE -> {
+                ds.isStrikeThruText = true
+            }
+            Styles.UNDER_LINE->{
+                ds.isUnderlineText = true
+            }
+            Styles.PLAIN -> Unit
+        }
     }
+    
+    
     fun getChangedName(): String = selectedText
+    fun getStyleNameName(): Styles = styles
+    fun getTypeFace(): Int = styles.typeface
 }
-
-
-//class AdvanceBlockMakeSpan (
-//    private val advanceStyleFormat: AdvanceStyleFormat,
-//    private val selectedText : String
-//) : StyleSpan(Typeface.NORMAL) {
-//    override fun updateDrawState(ds: TextPaint) {
-//        super.updateDrawState(ds)
-//        ds.typeface = Typeface.create(ds.typeface, Typeface.NORMAL)
-//        ds.setColor(advanceStyleFormat.color)
-//        ds.bgColor = advanceStyleFormat.backGround
-//        ds.isStrikeThruText = advanceStyleFormat==AdvanceStyleFormat.Strike
-//        ds.isUnderlineText = advanceStyleFormat == AdvanceStyleFormat.UnderLine
-//    }
-//    fun getChangedName(): String = selectedText
-//    fun getStyleName(): AdvanceStyleFormat = advanceStyleFormat
-//}
-//
-//enum class AdvanceStyleFormat(
-//    val color: Int= Color.WHITE,
-//    val backGround:Int=Color.TRANSPARENT
-//) {
-//    CodeBlock(Color.MAGENTA,Color.WHITE),
-//    Strike,
-//    UnderLine
-//}

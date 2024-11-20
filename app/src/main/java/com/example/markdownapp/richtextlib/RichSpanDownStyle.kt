@@ -11,8 +11,10 @@ object RichSpanDownStyle {
     fun EditText.toggleStyle(style : Styles) {
 
         val styleType = when(style){
-            Styles.BOLD -> Typeface.BOLD
-            Styles.ITALIC -> Typeface.ITALIC
+            Styles.BOLD -> Styles.BOLD
+            Styles.ITALIC -> Styles.ITALIC
+            Styles.UNDER_LINE -> Styles.UNDER_LINE
+            Styles.STRIKE -> Styles.STRIKE
             else -> Typeface.NORMAL
         }
 
@@ -26,7 +28,7 @@ object RichSpanDownStyle {
 
         if (selectorTextAndUpdate.isEmpty() && start==end ){
             text?.insert(start,"\u00A0")
-            spannableText.setSpan(StyleMakeSpan(styleType,"\u00A0"),start,start+1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannableText.setSpan(StyleMakeSpan(style,"\u00A0"),start,start+1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             setSelection(start,start+1)
             return
         }
@@ -37,7 +39,7 @@ object RichSpanDownStyle {
         var isStyle = false
 
         spans.forEach { span ->
-            if (span.style == styleType) {
+            if (span.getStyleNameName() == styleType) {
                 isStyle = true
             }
             spannableText.removeSpan(span) // Remove existing style span
@@ -45,7 +47,7 @@ object RichSpanDownStyle {
 
         // If the text is not style, apply the span
         if (!isStyle) {
-            spannableText.setSpan(StyleMakeSpan(styleType,selectorTextAndUpdate), start, start+selectorTextAndUpdate.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannableText.setSpan(StyleMakeSpan(style,selectorTextAndUpdate), start, start+selectorTextAndUpdate.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         setSelection(start+selectorTextAndUpdate.length)
     }
@@ -54,8 +56,10 @@ object RichSpanDownStyle {
     fun EditText.makeStyleFormat(mention: String, style: Styles, start:Int, end:Int) {
         val spannable = text as Spannable
         when(style){
-            Styles.BOLD -> spannable.setSpan(StyleMakeSpan(Typeface.BOLD,mention), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            Styles.ITALIC -> spannable.setSpan(StyleMakeSpan(Typeface.ITALIC,mention), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            Styles.BOLD -> spannable.setSpan(StyleMakeSpan(Styles.BOLD,mention), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            Styles.ITALIC -> spannable.setSpan(StyleMakeSpan(Styles.ITALIC,mention), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            Styles.STRIKE -> spannable.setSpan(StyleMakeSpan(Styles.STRIKE,mention), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            Styles.UNDER_LINE -> spannable.setSpan(StyleMakeSpan(Styles.UNDER_LINE,mention), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             else -> {}
         }
 //        setText(spannable, TextView.BufferType.SPANNABLE)
@@ -99,12 +103,12 @@ object RichSpanDownStyle {
                         Typeface.BOLD -> {
                             val latestText = editableText.substring(spanStart, spanEnd + count - 1)
                             editableText.removeSpan(span)
-                            editableText.setSpan(StyleMakeSpan(Typeface.BOLD, latestText), spanStart, spanStart + latestText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            editableText.setSpan(StyleMakeSpan(Styles.BOLD, latestText), spanStart, spanStart + latestText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                         }
                         Typeface.ITALIC -> {
                             val latestText = editableText.substring(spanStart, spanEnd + count - 1)
                             editableText.removeSpan(span)
-                            editableText.setSpan(StyleMakeSpan(Typeface.BOLD, latestText), spanStart, spanStart + latestText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            editableText.setSpan(StyleMakeSpan(Styles.ITALIC, latestText), spanStart, spanStart + latestText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                         }
                         Typeface.NORMAL -> {
                             return // No need to process normal text
@@ -134,7 +138,6 @@ object RichSpanDownStyle {
         setText(spannable,TextView.BufferType.SPANNABLE)
     }
 
-
     fun EditText.onTypeStateChange(start: Int,count: Int, currentTypeStyle: Styles) {
 
         try {
@@ -142,10 +145,12 @@ object RichSpanDownStyle {
             println("Updating span from setSpan(StyleMakeSpan >>start> $start >>count>$count >>currentTypeStyle>$currentTypeStyle")
             println("Updating span from .setSpan(StyleMakeSpan >>text > ${text.substring(start-count,start)}")
 
-            val style = when (currentTypeStyle) {
-                Styles.BOLD -> Typeface.BOLD
-                Styles.ITALIC -> Typeface.ITALIC
-                else -> Typeface.NORMAL
+            val updateStyle = when (currentTypeStyle) {
+                Styles.BOLD -> Styles.BOLD
+                Styles.ITALIC -> Styles.ITALIC
+                Styles.STRIKE -> Styles.STRIKE
+                Styles.UNDER_LINE -> Styles.UNDER_LINE
+                else -> Styles.PLAIN
             }
 
             val editableText = text as Spannable
@@ -165,7 +170,7 @@ object RichSpanDownStyle {
             println("EditText.onTypeStateChange >>> existingSpans>${existingSpans.size}")
 
             if (existingSpans.isEmpty()){
-                editableText.setSpan(StyleMakeSpan(style, editableText.substring(start-count, start)), start-count, start, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+                editableText.setSpan(StyleMakeSpan(updateStyle, editableText.substring(start-count, start)), start-count, start, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
                 return
             }
 
@@ -173,29 +178,29 @@ object RichSpanDownStyle {
                 val startSpan = editableText.getSpanStart(it)
                 val endSpan = editableText.getSpanEnd(it)
                 if (start in startSpan..endSpan) {
-                    if (it.style == style) {
+                    if (it.getStyleNameName() == updateStyle) {
                         editableText.removeSpan(it)
                         println("Updating span from yes $startSpan to $endSpan >>>$start")
                         if (startSpan < start) {
                             println("Updating span from yes case 1 passed ")
-                            editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(startSpan,start)), startSpan, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            editableText.setSpan(StyleMakeSpan(styles = it.getStyleNameName(),text.toString().substring(startSpan,start)), startSpan, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                         }
                         if (start < endSpan) {
                             println("Updating span from yes case 2 passed ")
-                            editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(start,endSpan)), start, endSpan, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            editableText.setSpan(StyleMakeSpan(styles = it.getStyleNameName(),text.toString().substring(start,endSpan)), start, endSpan, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                         }
                     } else {
                         println("Updating span from no $startSpan to $endSpan >>>$start")
                         editableText.removeSpan(it)
                         if (startSpan < start-count) {
                             println("Updating span from no case 1 passed ")
-                            editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(startSpan,start-count)), startSpan, start-count, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            editableText.setSpan(StyleMakeSpan(styles = it.getStyleNameName(),text.toString().substring(startSpan,start-count)), startSpan, start-count, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                         }
                         if (start < endSpan) {
                             println("Updating span from no case 2 passed ")
-                            editableText.setSpan(StyleMakeSpan(typeface = it.style,text.toString().substring(start,endSpan)), start, endSpan, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            editableText.setSpan(StyleMakeSpan(styles = it.getStyleNameName(),text.toString().substring(start,endSpan)), start, endSpan, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                         }
-                        editableText.setSpan(StyleMakeSpan(typeface = style,text.toString().substring(start-count, start)), start-count, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        editableText.setSpan(StyleMakeSpan(styles = updateStyle,text.toString().substring(start-count, start)), start-count, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                     }
                 }}
             setSelection(start)
@@ -218,12 +223,18 @@ object RichSpanDownStyle {
                 val startOfSpan = spannableString.getSpanStart(it)
                 val endOfSpan = spannableString.getSpanStart(it)
                 println("binding.overlayEditText.setOnTouchListener ACTION_UP >>1>$startOfSpan >$selectionStart >>>$endOfSpan")
-                when (it.style) {
-                    Typeface.BOLD -> {
+                when (it.getStyleNameName()) {
+                    Styles.BOLD -> {
                         currentStyle.invoke(Styles.BOLD)
                     }
-                    Typeface.ITALIC -> {
+                    Styles.ITALIC -> {
                         currentStyle.invoke(Styles.ITALIC)
+                    }
+                    Styles.STRIKE -> {
+                        currentStyle.invoke(Styles.STRIKE)
+                    }
+                    Styles.UNDER_LINE -> {
+                        currentStyle.invoke(Styles.UNDER_LINE)
                     }
                     else -> {
                         currentStyle.invoke(Styles.PLAIN)

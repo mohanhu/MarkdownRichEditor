@@ -185,20 +185,30 @@ class EditorFragment : Fragment() , MarkDownCallBack {
         }
 
         binding.italicButton.setOnClickListener {
-            binding.overlayEditText.toggleStyle(Styles.ITALIC)
-            currentTypeStyle = if (currentTypeStyle == Styles.ITALIC){
+            binding.overlayEditText.toggleStyle(Styles.UNDER_LINE)
+            currentTypeStyle = if (currentTypeStyle == Styles.UNDER_LINE){
                 binding.overlayEditText.apply {
                     text?.insert(selectionStart.takeIf { it>=0 }?:0," ")
                     setSelection(selectionStart.takeIf { it>=0 }?:0)
                 }
                 Styles.PLAIN
             } else {
-                Styles.ITALIC
+                Styles.UNDER_LINE
             }
         }
 
         binding.mentionButton.setOnClickListener {
-            binding.rvOptions.visibility = View.VISIBLE
+            binding.overlayEditText.toggleStyle(Styles.STRIKE)
+            currentTypeStyle = if (currentTypeStyle == Styles.STRIKE){
+                binding.overlayEditText.apply {
+                    text?.insert(selectionStart.takeIf { it>=0 }?:0," ")
+                    setSelection(selectionStart.takeIf { it>=0 }?:0)
+                }
+                Styles.PLAIN
+            } else {
+                Styles.STRIKE
+            }
+//            binding.rvOptions.visibility = View.VISIBLE
         }
 
         binding.linkButton.setOnClickListener {

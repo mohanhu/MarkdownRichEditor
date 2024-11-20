@@ -4,6 +4,86 @@ import android.widget.EditText
 
 object NumberOrdering {
 
+    fun EditText.addNumberList() {
+        val start = selectionStart.takeIf { it != -1 } ?: 0
+        val end = selectionEnd.takeIf { it != -1 } ?: 0
+        val selectedText = text.substring(start, end)
+
+        val lines = selectedText.split("\n")
+
+        //    Check the starting style is Number
+        println("fun EditText.addNumberList() >>> ${lines.first().trimStart().indexOfFirst { it.isDigit() }}")
+        val isNumberStyle = lines.first().trimStart().indexOfFirst { it.isDigit() }==0
+
+        val isAtLineStart = start == 0 || text[start - 1] == '\n'
+
+        var currentIndex = start
+
+        val regex = Regex("""^\d+\.\s""")
+
+        if (isNumberStyle){
+            currentIndex+=3
+            lines.forEachIndexed { index, s ->
+                if (regex.containsMatchIn(s)) {
+                    text?.delete(currentIndex-3,currentIndex)
+                    currentIndex+=s.length-2
+                }
+                else{
+                    currentIndex+=s.length
+                }
+            }
+        }
+        else{
+            if (isAtLineStart){
+                lines.forEachIndexed { index, s ->
+                    text?.insert(currentIndex,"${index+1}. ")
+                    currentIndex += s.length+4
+                }
+            }
+            else{
+                text?.insert(currentIndex,"\n")
+                currentIndex++
+                lines.forEachIndexed { index, s ->
+                    text?.insert(currentIndex,"${index+1}. ")
+                    currentIndex += s.length+4
+                }
+            }
+        }
+
+//        // Toggle numbering: If a line starts with a number followed by a period, remove it; otherwise, add numbering
+//        val numberListText = if (isAtLineStart) {
+//            lines.mapIndexed { index, line ->
+//                val trimmedLine = line.trimStart()
+//                val regex = Regex("""^\d+\.\s""")  // Regex to check if the line starts with a number and a period (e.g., "1. ")
+//                if (regex.containsMatchIn(trimmedLine) && isNumberStyle) {
+//                    // Remove the numbering (e.g., "1. ") if it starts with a number
+//                    trimmedLine.replaceFirst(regex, "").trimStart()
+//                } else {
+//                    // Add numbering if the line does not start with a number
+//                    "${index + 1}. $line"
+//                }
+//            }.joinToString("\n")
+//        } else {
+//            "\n" + lines.mapIndexed { index, line ->
+//                val trimmedLine = line.trimStart()
+//                val regex = Regex("""^\d+\.\s""")
+//
+//                if (regex.containsMatchIn(trimmedLine) && isNumberStyle) {
+//                    // Remove the numbering
+//                    trimmedLine.replaceFirst(regex, "").trimStart()
+//                } else {
+//                    "${index + 1}. $line"
+//                }
+//            }.joinToString("\n")
+//        }
+//
+//        // Replace the selected text with the toggled numbered list
+//        text.replace(start, end, numberListText)
+//
+//        // Adjust the cursor position after modifying the list
+//        setSelection(start + numberListText.length)
+    }
+
     /**------------------------Forward--------------------------*/
 
     /**

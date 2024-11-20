@@ -14,6 +14,11 @@ import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat
 import com.example.markdownapp.R
+import com.example.markdownapp.extra.MarkDownCallBack
+import com.example.markdownapp.extra.NeedPatternList
+import com.example.markdownapp.extra.PATTERN_TYPE
+import com.example.markdownapp.extra.PatternString
+import com.example.markdownapp.extra.needPatternList
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
 import io.noties.markwon.linkify.LinkifyPlugin

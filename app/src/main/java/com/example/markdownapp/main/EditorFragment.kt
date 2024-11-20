@@ -9,8 +9,6 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -20,29 +18,22 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.markdownapp.R
 import com.example.markdownapp.databinding.FragmentEditorBinding
-import com.example.markdownapp.richtextlib.AdvanceStyleFormat
+import com.example.markdownapp.richtextlib.BlockExport.blockJsonExportToEdit
+import com.example.markdownapp.richtextlib.BlockExport.blockJsonToExportDataTextView
 import com.example.markdownapp.richtextlib.BlockKit.blockKitListGenerate
-import com.example.markdownapp.richtextlib.BlockKitData
-import com.example.markdownapp.richtextlib.BlockKitManage
-import com.example.markdownapp.richtextlib.MarkDownCallBack
-import com.example.markdownapp.richtextlib.MarkDownStyle.advanceMakeStyle
-import com.example.markdownapp.richtextlib.MarkDownStyle.makeStyleFormat
-import com.example.markdownapp.richtextlib.MarkDownStyle.onTypeStateChange
-import com.example.markdownapp.richtextlib.MarkDownStyle.toggleStyle
-import com.example.markdownapp.richtextlib.NeedPatternList
+import com.example.markdownapp.richtextlib.BulletOrdering.addBulletList
+import com.example.markdownapp.richtextlib.BulletOrdering.bulletFormatForward
+import com.example.markdownapp.extra.MarkDownCallBack
+import com.example.markdownapp.richtextlib.RichSpanDownStyle.onTypeStateChange
+import com.example.markdownapp.richtextlib.RichSpanDownStyle.toggleStyle
+import com.example.markdownapp.extra.NeedPatternList
+import com.example.markdownapp.richtextlib.NumberOrdering.addNumberList
 import com.example.markdownapp.richtextlib.NumberOrdering.formatNumberBackward
 import com.example.markdownapp.richtextlib.NumberOrdering.formatNumberForward
-import com.example.markdownapp.richtextlib.PATTERN_TYPE
-import com.example.markdownapp.richtextlib.StyleActionBindClick.addBulletList
+import com.example.markdownapp.extra.PATTERN_TYPE
 import com.example.markdownapp.richtextlib.StyleActionBindClick.addMention
-import com.example.markdownapp.richtextlib.StyleActionBindClick.addNumberList
-import com.example.markdownapp.richtextlib.StyleActionBindClick.currentLineStartsWithDash
-import com.example.markdownapp.richtextlib.StyleActionBindClick.editAddLink
-import com.example.markdownapp.richtextlib.StyleActionBindClick.editAddMention
 import com.example.markdownapp.richtextlib.Styles
 import com.example.markdownapp.utils.redirectToChrome
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import io.noties.markwon.Markwon
@@ -68,8 +59,6 @@ class EditorFragment : Fragment() , MarkDownCallBack {
     private val viewModel by viewModels<RIchTextViewModel>()
 
     private var LAST_RICH_EDITOR_CURSOR_POSITION = 1
-
-    private var mentionDataClass = mutableListOf<BlockKitManage>()
 
     private var apiEditData = JsonObject()
 
@@ -100,78 +89,32 @@ class EditorFragment : Fragment() , MarkDownCallBack {
 
     private fun senderAndReceiver() {
         binding.sendBtn.setOnClickListener {
-
-            val gson = GsonBuilder().disableHtmlEscaping().enableComplexMapKeySerialization().create()
-            val jsonObject = JsonObject()
-
             val blockCode = binding.overlayEditText.blockKitListGenerate()
-
-            jsonObject.addProperty("text",blockCode.text)
+            val jsonObject = JsonObject()
+//        jsonObject.addProperty("text",jsonBlockRich.text)
             JsonArray().apply {
-                blockCode.block.forEach{ data ->
+                blockCode.block?.forEach{ data ->
                     add((JsonObject().also {
-                        it.addProperty("key",data.key)
-                        it.addProperty("word",data.word)
-                        it.addProperty("pattern",data.pattern)
-                        it.addProperty("styleFormat",data.styleFormat.name)
+                        it.addProperty("value",data.value)
+                        it.addProperty("text",data.text)
+                        it.addProperty("style",data.style)
                     }))
                 }
             }.also { array->
                 jsonObject.add("block",array)
             }
-
-            println("EditText.blockKitListGenerate() >>> ${blockCode.block}")
-            println("EditText.blockKitListGenerate() >>> $jsonObject")
-
-            mentionDataClass = gson.fromJson(jsonObject,BlockKitData::class.java).block.toMutableList()
-            println("$timber >>> preview in mention data class >>> $mentionDataClass")
-            println("$timber >>> preview json file file mention >>> $jsonObject")
             apiEditData = jsonObject
-
-            CoroutineScope(Dispatchers.Main).launch {
-                buildSentenceFromMentions(blockCode.block)
+            val blockList =  binding.tvMarkDown.blockJsonToExportDataTextView(blockJson = jsonObject.toString())
+           CoroutineScope(Dispatchers.Main).launch {
+                val needPatternList = listOf(NeedPatternList(neededType = PATTERN_TYPE.URL_PATTERN, color = R.color.button_blue_color),)
+               binding.tvMarkDown.getInstance(this@EditorFragment)
+               binding.tvMarkDown.startPatternRecognition(markDown = false, needPatternList = needPatternList, mentionList = blockList)
             }
-//            binding.overlayEditText.removeAllSpans()
         }
 
         binding.tvMarkDown.setOnClickListener {
-
-            currentTypeStyle  = Styles.PLAIN
-
-            val blockKitData = Gson().fromJson(apiEditData,BlockKitData::class.java)
-
-            var blockKitManage = blockKitData.block.map { it.toBlockKitManage() }
-
-            var makeString = ""
-            blockKitData.block.forEachIndexed { index, head ->
-                blockKitManage = blockKitManage.mapIndexed { i, b ->
-                    if (i == index) {
-                        b.copy(startIndex = makeString.length, endIndex = makeString.length + b.word.length)
-                    } else {
-                        b
-                    }
-                }
-                makeString += head.word
-            }
-
-            binding.overlayEditText.setText(makeString,TextView.BufferType.SPANNABLE)
-
-            blockKitManage.sortedBy { it.startIndex }.forEach {
-                if (it.styleFormat == Styles.MENTION){
-                    binding.overlayEditText.editAddMention(it.word,it.key.toLong(),it.startIndex,it.endIndex)
-                }
-                if ( it.styleFormat == Styles.LINK){
-                    binding.overlayEditText.editAddLink(it.word,it.key,it.startIndex,it.endIndex)
-                }
-                if (it.styleFormat == Styles.BOLD){
-                    binding.overlayEditText.makeStyleFormat(it.word,it.styleFormat,it.startIndex,it.endIndex)
-                }
-                if (it.styleFormat == Styles.ITALIC){
-                    binding.overlayEditText.makeStyleFormat(it.word,it.styleFormat,it.startIndex,it.endIndex)
-                }
-                println("mentionDataClass.sortedByDescending >>> ${it.styleFormat}")
-            }
-//            binding.overlayEditText.text?.insert(makeString.length," ")
+            binding.overlayEditText.blockJsonExportToEdit(apiEditData.toString())
+            currentTypeStyle = Styles.PLAIN
         }
     }
 
@@ -184,13 +127,13 @@ class EditorFragment : Fragment() , MarkDownCallBack {
                 if (LAST_RICH_EDITOR_CURSOR_POSITION < cursor && currentTypeStyle!=Styles.PLAIN) {
                     println("EditText.onTypeStateChange >>>> $cursor >>${s?.length}")
                     binding.overlayEditText.apply {
-                        onTypeStateChange(cursor, currentTypeStyle)
+                        onTypeStateChange(cursor,count, currentTypeStyle)
                     }
                 }
 //                val cursor = binding.overlayEditText.selectionStart
 //                if(LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
 //                    println("binding.overlayEditText.addTextChangedListener >>> satisfied ${binding.overlayEditText.selectionStart}")
-////                    binding.overlayEditText.handleMarkDownWatcher(start,count,currentTypeStyle)
+////                    binding.overlayEditText.handleInBetweenStylesChar(start,count,currentTypeStyle)
 //                }
 //                println("EditText.handleMarkDownWatcher start >> gothrough char >>>Last>$LAST_RICH_EDITOR_CURSOR_POSITION start>$start >>before>$before >>count>$count")
 //                if (before > 0 && count == 0 && binding.overlayEditText.selectionStart>0) { }
@@ -198,12 +141,9 @@ class EditorFragment : Fragment() , MarkDownCallBack {
 
             override fun afterTextChanged(s: Editable?) {
                 val cursor = binding.overlayEditText.selectionStart?.takeIf { it>=0 }?:0
-                if (binding.overlayEditText.currentLineStartsWithDash() && LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
-                    binding.overlayEditText.post {
-                        binding.overlayEditText.text?.insert(cursor, "• ")
-                    }
+                if (LAST_RICH_EDITOR_CURSOR_POSITION < cursor) {
+                    binding.overlayEditText.bulletFormatForward(cursor)
                 }
-
                 if (LAST_RICH_EDITOR_CURSOR_POSITION<cursor){
                     binding.overlayEditText.formatNumberForward(cursor)
                 }
@@ -258,8 +198,7 @@ class EditorFragment : Fragment() , MarkDownCallBack {
         }
 
         binding.mentionButton.setOnClickListener {
-//            binding.rvOptions.visibility = View.VISIBLE
-            binding.overlayEditText.advanceMakeStyle(AdvanceStyleFormat.UnderLine)
+            binding.rvOptions.visibility = View.VISIBLE
         }
 
         binding.linkButton.setOnClickListener {
@@ -291,35 +230,6 @@ class EditorFragment : Fragment() , MarkDownCallBack {
         binding.rvOptions.layoutManager =LinearLayoutManager(requireContext(),LinearLayoutManager.VERTICAL,false)
         binding.rvOptions.adapter = mentionListAdapter
         mentionListAdapter.submitList(MentionClass.List.mentionDataClass)
-    }
-
-    private suspend fun buildSentenceFromMentions(mentionList: List<BlockKitManage>) {
-        val updateFormat = Gson().fromJson(apiEditData,BlockKitData::class.java)
-        var blockList = mentionList.map { it.toBlockKitManage() }
-        println("buildSentenceFromMentions 2.0 >>>>>$blockList")
-
-        var makeString = ""
-        updateFormat.block.forEachIndexed { index, blockKitManage ->
-            blockList = blockList.mapIndexed { i, b ->
-                if (i == index) {
-                    b.copy(startIndex = makeString.length, endIndex = makeString.length + b.word.length)
-                } else {
-                    b
-                }
-            }
-            makeString += blockKitManage.word
-        }
-
-        binding.tvMarkDown.text = makeString
-        val needPatternList = listOf<NeedPatternList>(
-            NeedPatternList(neededType = PATTERN_TYPE.URL_PATTERN, R.color.button_blue_color),
-        )
-        binding.tvMarkDown.getInstance(this@EditorFragment)
-        binding.tvMarkDown.startPatternRecognition(
-            markDown = false ,
-            needPatternList = needPatternList,
-            mentionList = blockList
-        )
     }
 
     override fun mentionOnClick(mentionId: String) {

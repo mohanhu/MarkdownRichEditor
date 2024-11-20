@@ -1,4 +1,4 @@
-package com.example.markdownapp.richtextlib
+package com.example.markdownapp.extra
 
 import android.content.Context
 import android.view.inputmethod.InputMethodManager

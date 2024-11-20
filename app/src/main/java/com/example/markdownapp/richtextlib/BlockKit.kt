@@ -1,7 +1,7 @@
 package com.example.markdownapp.richtextlib
 
 import android.graphics.Typeface
-import android.text.SpannableStringBuilder
+import android.text.Spannable
 import android.widget.EditText
 import com.google.gson.annotations.SerializedName
 
@@ -9,8 +9,7 @@ object BlockKit {
 
     fun EditText.blockKitListGenerate() : BlockKitData {
 
-        val spannableText = SpannableStringBuilder(text)
-
+        val spannableText = text as Spannable
         /**
          * Filter based on MentionClickableSpan to filter mention and link
          * */
@@ -19,7 +18,7 @@ object BlockKit {
         val mentionList = mentionSpans.sortedBy { spannableText.getSpanStart(it) }.map { span ->
             val start = spannableText.getSpanStart(span)
             val end = spannableText.getSpanEnd(span)
-            val original = if (span.getCurrentStyle()==Styles.MENTION){
+            val original = if (span.getCurrentStyle()== Styles.MENTION){
                 spannableText.substring(start,end)
             }
             else{
@@ -42,7 +41,7 @@ object BlockKit {
          * */
 
         val boldSpan = spannableText.getSpans(0 , spannableText.length, StyleMakeSpan::class.java)
-        boldSpan.toList().asSequence().filter { span -> span.style == Typeface.BOLD || span.style== Typeface.ITALIC }
+        boldSpan.filter { span -> span.style == Typeface.BOLD || span.style== Typeface.ITALIC }
             .map { span->
                 val start = spannableText.getSpanStart(span)
                 val end = spannableText.getSpanEnd(span)
@@ -55,17 +54,21 @@ object BlockKit {
                 println("Mohan Typeface.BOLD::class.java ::: getChangedName>start>$start>end>$end >start>$original>end>${span.getChangedName()}>style>$styleFormat")
                 MentionDataClass(startIndex = start, endIndex = end , isSame = true ,word = original , key = "", styleFormat = styleFormat )
             }.toList()
-            .reversed().distinctBy { Pair(it.startIndex, it.endIndex) }.sortedBy { it.startIndex }
+            .reversed().distinctBy { Pair(it.startIndex, it.endIndex) }.distinctBy { it.startIndex }.sortedBy { it.startIndex }
             .also { dataClasses ->
                 println("Mohan Typeface.BOLD::class.java ::: getChangedName>start>filter>>>$dataClasses")
-            mergeAdjacentMentions(dataClasses,text.toString()).also { update->
-                mentionList.addAll(update)
+                mergeAdjacentMentions(dataClasses,text.toString()).also { update->
+                    mentionList.addAll(update)
+                }
             }
-        }
 
         val filterList = filterBasedOnIndex(mentionList.filter { it.isSame }.sortedBy { it.startIndex })
 
-        return BlockKitData(text = "", block = filterList.map { it.toBlockKitManage() } )
+        filterList.forEach {
+            println("filterBasedOnIndex block filter search >>>> $it")
+        }
+
+        return BlockKitData(block = filterList.map { it.toBlockKitManage() } )
     }
 
     /**
@@ -94,29 +97,28 @@ object BlockKit {
         // Add the last entry
         mergedMentions.add(current)
 
-        println("mergeAdjacentMentions  <<<parent $mergedMentions")
-
+        /**
+         * safety check if one item exceed the another item index*/
         if (mergedMentions.size>1){
-            mergedMentions.forEachIndexed { index, mentionDataClass ->
-            try {
-                val first = mergedMentions[index]
-                val next = mergedMentions[index+1]
-                println("mergeAdjacentMentions  <<<first $first")
-                println("mergeAdjacentMentions  <<<next $next")
-                if (first.endIndex > next.startIndex) {
-                    println("mergeAdjacentMentions  <<<satisfied>> ")
-                    lastFilter.add(MentionDataClass(startIndex = first.startIndex, endIndex = next.startIndex, word = word.substring(first.startIndex,next.startIndex), styleFormat = first.styleFormat))
-                    lastFilter.add(MentionDataClass(startIndex = next.endIndex, endIndex = first.endIndex, word = word.substring(next.endIndex,first.endIndex), styleFormat = first.styleFormat))
-                    lastFilter.add(next)
+            mergedMentions.distinctBy { it.startIndex }.forEachIndexed { index, mentionDataClass ->
+                try {
+                    val first = mergedMentions[index]
+                    val next = mergedMentions[index+1]
+                    println("mergeAdjacentMentions  <<<first $first")
+                    println("mergeAdjacentMentions  <<<next $next")
+                    if (first.endIndex > next.startIndex) {
+                        println("mergeAdjacentMentions  <<satis")
+                        lastFilter.add(MentionDataClass(startIndex = first.startIndex, endIndex = next.startIndex, word = word.substring(first.startIndex,next.startIndex), styleFormat = first.styleFormat))
+                        lastFilter.add(next)
+                    }
+                    else{
+                        lastFilter.add(first)
+                        lastFilter.add(next)
+                    }
                 }
-                else{
-                    lastFilter.add(first)
-                    lastFilter.add(next)
+                catch (e:Exception){
+                    lastFilter.add(mergedMentions.last())
                 }
-            }
-            catch (e:Exception){
-                lastFilter.add(mergedMentions.last())
-            }
             }
         }
         else{
@@ -148,26 +150,26 @@ object BlockKit {
     }
 
     private fun List<MentionDataClass>.toDistinctItemsToSort() =
-       distinctBy { it.startIndex }.distinctBy { Pair(it.startIndex,it.endIndex) }.sortedBy { it.startIndex }
+        distinctBy { it.startIndex }.distinctBy { Pair(it.startIndex,it.endIndex) }.sortedBy { it.startIndex }
 
 }
 
 data class BlockKitData (
-    @SerializedName("text") val text : String = "",
-    @SerializedName("block") val block: List<BlockKitManage> = listOf()
+//    @SerializedName("text") val text : String = "", Not used in ios
+    @SerializedName("block") val block: List<BlockKitManage> ?= listOf()
 )
 
 data class BlockKitManage(
-    @SerializedName("word") val word:String = "",
-    @SerializedName("key") val key : String="",
-    @SerializedName("styleFormat") val styleFormat : Styles,
-    @SerializedName("pattern") val pattern: String = ""
+    @SerializedName("text") val text:String ?= "",
+    @SerializedName("value") val value : String ?="0",
+    @SerializedName("style") val style : String ?= Styles.PLAIN.name,
+//    @SerializedName("pattern") val pattern: String = "<@47368,Mohan>"  Not used in ios
 ) {
     fun toBlockKitManage() = MentionDataClass (
-        word = word,
-        key = key,
-        styleFormat = styleFormat,
-        pattern = pattern
+        word = text?:"",
+        key = value?:"0",
+        styleFormat = Styles.entries.firstOrNull { it.name == style }?: Styles.PLAIN,
+//        pattern = pattern
     )
 }
 
@@ -181,10 +183,10 @@ data class MentionDataClass (
     val isSame:Boolean = true
 ) {
     fun toBlockKitManage() = BlockKitManage(
-        word = word,
-        key = key,
-        styleFormat = styleFormat,
-        pattern = pattern
+        text = word,
+        value = key,
+        style = styleFormat.name,
+//        pattern = pattern
     )
 }
 

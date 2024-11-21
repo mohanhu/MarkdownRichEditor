@@ -28,9 +28,9 @@ import com.example.markdownapp.richtextlib.RichSpanDownStyle.onTypeStateChange
 import com.example.markdownapp.richtextlib.RichSpanDownStyle.toggleStyle
 import com.example.markdownapp.extra.NeedPatternList
 import com.example.markdownapp.richtextlib.NumberOrdering.addNumberList
-import com.example.markdownapp.richtextlib.NumberOrdering.formatNumberBackward
 import com.example.markdownapp.richtextlib.NumberOrdering.formatNumberForward
 import com.example.markdownapp.extra.PATTERN_TYPE
+import com.example.markdownapp.richtextlib.NumberOrdering.toFormatNumberBasedOnCursor
 import com.example.markdownapp.richtextlib.StyleActionBindClick.addMention
 import com.example.markdownapp.richtextlib.Styles
 import com.example.markdownapp.utils.redirectToChrome
@@ -147,9 +147,7 @@ class EditorFragment : Fragment() , MarkDownCallBack {
                 if (LAST_RICH_EDITOR_CURSOR_POSITION<cursor){
                     binding.overlayEditText.formatNumberForward(cursor)
                 }
-                if(LAST_RICH_EDITOR_CURSOR_POSITION>cursor){
-                    binding.overlayEditText.formatNumberBackward(cursor)
-                }
+                binding.overlayEditText.toFormatNumberBasedOnCursor(cursor)
                 LAST_RICH_EDITOR_CURSOR_POSITION = cursor
             }
         })

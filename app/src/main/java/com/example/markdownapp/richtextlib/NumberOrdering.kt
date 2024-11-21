@@ -83,11 +83,10 @@ object NumberOrdering {
 //
 //        // Adjust the cursor position after modifying the list
 //        setSelection(start + numberListText.length)
-
     /**------------------------Forward--------------------------*/
 
     /**
-     * Forward cursor Check above line has Number format
+     * Check cursor above line has Number format
      **/
     private fun EditText.checkBeforeLineHaveNumber(cursor: Int) : Pair<Boolean,Int> {
         val textBeforeCursor = text.toString().substring(0, cursor)
@@ -101,8 +100,8 @@ object NumberOrdering {
         }
 
         return if(regex.containsMatchIn(currentLine.trimStart())){
-            val indexOfStart = currentLine.indexOfFirst { it.isDigit() }+2
             val number = findNumberForRespectiveString(currentLine.trimIndent())
+            val indexOfStart = currentLine.indexOfFirst { it.isDigit() }+number.toString().length+1
             Pair(currentLine.substring(indexOfStart).trimIndent().isNotBlank(),number)
         }
         else{
@@ -111,100 +110,29 @@ object NumberOrdering {
     }
 
     /**
-     * Forward Number ordering mapping
+     * Check cursor current line has Number format
      **/
-    fun EditText.formatNumberForward(cursor:Int) {
-        val checkIsStyleFormat = checkBeforeLineHaveNumber(cursor)
-        if (checkIsStyleFormat.first){
-            post {
-                text?.insert(cursor, "${checkIsStyleFormat.second+1}. ")
-                val end = text.toString().length
-                val selectionText = text?.substring(cursor,end)?:""
+    private fun EditText.checkCurrentLineHaveNumber(cursor: Int) :Pair<Boolean,Int> {
+        val regex = Regex("""^\d+\.\s""")
+        val lastIndexOfNextLine = text?.substring(0,cursor).toString()?.lastIndexOf('\n')?.takeIf { it>0 }?:0
+        val selectionText = text.toString().substring(lastIndexOfNextLine,cursor)
+        val lines = selectionText.trimIndent().split("\n")
+        val currentLine = lines.firstOrNull() ?: ""
 
-                val lines = selectionText.trimIndent().split("\n")
-                val regex = Regex("""^\d+\.\s""")
-
-                var updateCountNumber = checkIsStyleFormat.second+1
-                var currentIndex = cursor
-
-                println("EditText.formatNumberStyles >>> number>${selectionText?.replace("\n"," ")}")
-                println("EditText.formatNumberStyles >>> number>${lines}")
-
-                lines.mapIndexed { index, line ->
-                    if (index==0) {
-                        // current line string add empty string length and \n length
-                        currentIndex+=line.length+1
-                        return@mapIndexed
-                    }
-                    if (regex.containsMatchIn(line.trimStart())) {
-                        text?.replace(currentIndex,currentIndex+updateCountNumber.toString().length,(updateCountNumber+1).toString())
-                        println("EditText.formatNumberBackward 2.0>>> forward >>${((updateCountNumber+1)%10==0)}")
-                        val updateCount = if ((updateCountNumber+1)%10==0) 1 else 0
-                        currentIndex+=line.length+updateCount+1
-                        updateCountNumber++
-                    }
-                    else{
-                        return@post
-                    }
-                }
-            }
+        println("EditText.checkStartLineHaveNumber >>current>$currentLine>")
+        return if (regex.containsMatchIn(currentLine.trimStart())) {
+            val number = findNumberForRespectiveString(currentLine.trimIndent())
+            val indexOfStart = currentLine.indexOfFirst { it.isDigit() }+number.toString().length+1
+            println("EditText.checkStartLineHaveNumber >>number>$number")
+            Pair(true,number)
         }
-    }
-
-    /**------------------------Backward--------------------------*/
-
-    /**
-     * Backward cursor Check above line has Number format
-     **/
-
-    fun EditText.formatNumberBackward(cursor: Int) {
-        val checkIsStyleFormat = checkNextLineHaveNumber(cursor)
-        if(checkIsStyleFormat.first || cursor == 0){
-            post {
-                val beforeCursorString = text?.substring(0,cursor)?.trimIndent()?.split("\n")?.last()
-                val number = findNumberForRespectiveString(beforeCursorString?:"".trimStart())
-                println("EditText.formatNumberBackward 2.0>>> number >>>$number")
-
-                var updateCountNumber = number
-                val end = text.toString().length
-
-                val selectionText = text?.substring(cursor,end)?:""
-
-                val lines = selectionText.trimIndent().split("\n")
-                val regex = Regex("""^\d+\.\s""")
-
-                var currentIndex = cursor+1
-
-                println("EditText.formatNumberBackward 2.0>>> selectionText>${selectionText?.replace("\n"," ")}")
-                println("EditText.formatNumberBackward 2.0>>> lines>${lines}")
-
-                lines.mapIndexed { index, line ->
-
-                    if (index==0 && !regex.containsMatchIn(line.trimStart())){
-                        currentIndex -= 1
-                        currentIndex += line.length + 1
-                        return@mapIndexed
-                    }
-
-                    if (regex.containsMatchIn(line.trimStart())) {
-                        val nextLineNumber = findNumberForRespectiveString(line.trimStart())
-                        if(updateCountNumber+1==nextLineNumber) return@post
-                        println("EditText.formatNumberBackward 2.0>>> new lines>$nextLineNumber")
-                        text?.replace(currentIndex,currentIndex+nextLineNumber.toString().length,(updateCountNumber+1).toString())
-                        val spaceBetween = ((nextLineNumber.toString().length)-(updateCountNumber+1).toString().length)
-                        currentIndex+=line.length+1-spaceBetween
-                        updateCountNumber++
-                    }
-                    else{
-                        return@post
-                    }
-                }
-            }
+        else{
+            Pair(false,0)
         }
     }
 
     /**
-     * Backward Next Line have number
+     * Check cursor below line has Number format
      **/
 
     private fun EditText.checkNextLineHaveNumber(cursor: Int): Pair<Boolean,Int> {
@@ -221,12 +149,91 @@ object NumberOrdering {
         val currentLine = lines.firstOrNull() ?: ""
 
         return if(regex.containsMatchIn(currentLine.trimStart())){
-            val indexOfStart = currentLine.indexOfFirst { it.isDigit() }+2
             val number = findNumberForRespectiveString(currentLine.trimIndent())
+            val indexOfStart = currentLine.indexOfFirst { it.isDigit() }+number.toString().length+1
             Pair(currentLine.substring(indexOfStart).trimIndent().isNotBlank(),number)
         }
         else {
-            checkBeforeLineHaveNumber(cursor)
+            Pair(false,0)
+        }
+    }
+
+    /**
+     * Forward Number increment by 1 if before line have number
+     **/
+    fun EditText.formatNumberForward(cursor:Int) {
+        val checkIsStyleFormat = checkBeforeLineHaveNumber(cursor)
+        if (checkIsStyleFormat.first){
+            post {
+                text?.insert(cursor, "${checkIsStyleFormat.second+1}. ")
+            }
+        }
+        else{
+            val checkNextLineHaveNumber = checkNextLineHaveNumber(cursor)
+            if (checkNextLineHaveNumber.first){
+                post {
+                    text?.insert(cursor, "${checkNextLineHaveNumber.second}. ")
+                }
+            }
+        }
+    }
+
+    /**
+     * Check Start of current Line have number
+     * */
+    fun EditText.toFormatNumberBasedOnCursor(cursor: Int){
+
+        val checkStartLineHaveNumber = checkCurrentLineHaveNumber(cursor)
+        if (checkStartLineHaveNumber.first){
+            formatNumber(cursor = cursor, number = checkStartLineHaveNumber.second)
+        }
+
+        val checkWhileCursorInBeforeOfNewLine = checkBeforeLineHaveNumber(cursor)
+        if (checkWhileCursorInBeforeOfNewLine.first){
+            println("EditText.checkStartLineHaveNumber >>number>back>${checkWhileCursorInBeforeOfNewLine.second}")
+            formatNumber(cursor,checkWhileCursorInBeforeOfNewLine.second)
+        }
+    }
+
+    /**
+     * Format number from current line count to +1
+     * */
+    private fun EditText.formatNumber(cursor: Int, number: Int){
+        post {
+            var updateCountNumber = number
+            val end = text.toString().length
+
+            if (cursor>end) return@post
+
+            println("EditText.formatNumber >>>>$cursor>$end")
+            val selectionText = text?.substring(cursor,end)?:""
+
+            val lines = selectionText.trimIndent().split("\n")
+            val regex = Regex("""^\d+\.\s""")
+
+            var currentIndex = cursor+1
+
+            println("EditText.formatNumberBackward 2.0>>> selectionText>${selectionText?.replace("\n"," ")}")
+            println("EditText.formatNumberBackward 2.0>>> lines>${lines}")
+
+            lines.mapIndexed { index, line ->
+                if (index==0 && !regex.containsMatchIn(line.trimStart())) {
+                    currentIndex+=line.length
+                    return@mapIndexed
+                }
+                if (regex.containsMatchIn(line.trimStart())) {
+                    val nextLineNumber = findNumberForRespectiveString(line.trimStart())
+                    if(updateCountNumber+1==nextLineNumber) return@post
+                    println("EditText.formatNumberBackward 2.0>>> new lines>$nextLineNumber")
+                    text?.replace(currentIndex,currentIndex+nextLineNumber.toString().length,(updateCountNumber+1).toString())
+                    val spaceBetween = ((nextLineNumber.toString().length)-(updateCountNumber+1).toString().length)
+                    currentIndex+=line.length+1-spaceBetween
+                    updateCountNumber++
+                }
+                else{
+                    return@post
+                }
+            }
         }
     }
 

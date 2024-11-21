@@ -198,17 +198,17 @@ class EditorFragment : Fragment() , MarkDownCallBack {
         }
 
         binding.mentionButton.setOnClickListener {
-            binding.overlayEditText.toggleStyle(Styles.STRIKE)
-            currentTypeStyle = if (currentTypeStyle == Styles.STRIKE){
-                binding.overlayEditText.apply {
-                    text?.insert(selectionStart.takeIf { it>=0 }?:0," ")
-                    setSelection(selectionStart.takeIf { it>=0 }?:0)
-                }
-                Styles.PLAIN
-            } else {
-                Styles.STRIKE
-            }
-//            binding.rvOptions.visibility = View.VISIBLE
+//            binding.overlayEditText.toggleStyle(Styles.STRIKE)
+//            currentTypeStyle = if (currentTypeStyle == Styles.STRIKE){
+//                binding.overlayEditText.apply {
+//                    text?.insert(selectionStart.takeIf { it>=0 }?:0," ")
+//                    setSelection(selectionStart.takeIf { it>=0 }?:0)
+//                }
+//                Styles.PLAIN
+//            } else {
+//                Styles.STRIKE
+//            }
+            binding.rvOptions.visibility = View.VISIBLE
         }
 
         binding.linkButton.setOnClickListener {

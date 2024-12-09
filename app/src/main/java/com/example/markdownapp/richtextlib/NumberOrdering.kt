@@ -41,11 +41,16 @@ object NumberOrdering {
                 }
             }
             else{
-                text?.insert(currentIndex,"\n")
-                currentIndex++
-                lines.forEachIndexed { index, s ->
-                    text?.insert(currentIndex,"${index+1}. ")
-                    currentIndex += s.length+4
+                if (checkCurrentLineHaveNumber(start).first){
+                    text?.insert(currentIndex,"\n")
+                }
+                else{
+                    text?.insert(currentIndex,"\n")
+                    currentIndex++
+                    lines.forEachIndexed { index, s ->
+                        text?.insert(currentIndex,"${index+1}. ")
+                        currentIndex += s.length+4
+                    }
                 }
             }
         }

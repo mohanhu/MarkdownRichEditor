@@ -42,11 +42,16 @@ object BulletOrdering {
                 }
             }
             else{
-                text?.insert(currentIndex,"\n")
-                currentIndex++
-                lines.forEachIndexed { index, s ->
-                    text?.insert(currentIndex,"• ")
-                    currentIndex += s.length+3
+                if (checkBulletHasCurrentLineLine(cursor = start)){
+                    text?.insert(currentIndex,"\n")
+                }
+                else{
+                    text?.insert(currentIndex,"\n")
+                    currentIndex++
+                    lines.forEachIndexed { index, s ->
+                        text?.insert(currentIndex,"• ")
+                        currentIndex += s.length+3
+                    }
                 }
             }
         }
@@ -88,22 +93,58 @@ object BulletOrdering {
     /**------------------------Bullet Style Forward--------------------------*/
 
     fun EditText.bulletFormatForward(cursor:Int) {
-        val cursorPos = selectionStart?.takeIf { it>=0 }?:0
-        println("currentLineStartsWithDash 0 <<<<$cursorPos")
-        val textBeforeCursor = text.toString().substring(0, cursorPos)
-
-        if (!textBeforeCursor.endsWith("\n"))
-            return
-        // Get the current line
-        val lines = textBeforeCursor.trimIndent().split("\n")
-        val currentLine = lines.lastOrNull() ?: ""
-
-        if (currentLine.trimStart().startsWith('•')){
-            val lastBullet = currentLine.indexOfLast { it == '•' }+1
-            println("currentLineStartsWithDash checkEmpty ${currentLine.substring(lastBullet).trimIndent().isEmpty()}")
-            if(currentLine.substring(lastBullet).trimIndent().isNotEmpty()){
+        if (checkBulletHasBeforeLineLine(cursor)){
+            post{
                 text?.insert(cursor, "• ")
             }
         }
     }
+
+    /**
+     * Check cursor before line has Bullet format
+     **/
+    private fun EditText.checkBulletHasBeforeLineLine(cursor: Int) : Boolean {
+        val textBeforeCursor = text.toString().substring(0, cursor)
+
+        val lines = textBeforeCursor.trimIndent().split("\n")
+        val currentLine = lines.lastOrNull() ?: ""
+
+        if (!textBeforeCursor.endsWith("\n"))
+            return false
+
+        return if (currentLine.trimStart().startsWith('•')){
+            val lastBullet = currentLine.indexOfFirst { it == '•' }+1
+            println("EditText.checkBulletHasPreviousLine >>>${currentLine.substring(lastBullet).trimIndent().isNotEmpty()}>")
+            currentLine.substring(lastBullet).trimIndent().isNotEmpty()
+        }
+        else{
+            false
+        }
+    }
+
+    /**
+     * Check cursor current line has Bullet format
+     **/
+    private fun EditText.checkBulletHasCurrentLineLine(cursor: Int) : Boolean {
+        val lastIndexOfNextLine = text?.substring(0,cursor).toString()?.lastIndexOf('\n')?.takeIf { it>0 }?:0
+        val textBeforeCursor = text.toString().substring(lastIndexOfNextLine, cursor)
+
+        val lines = textBeforeCursor.trimIndent().split("\n")
+        val currentLine = lines.lastOrNull() ?: ""
+
+        return if (currentLine.trimStart().startsWith('•')){
+            val lastBullet = currentLine.indexOfFirst { it == '•' }+1
+            println("EditText.checkBulletHasPreviousLine >>>${currentLine.substring(lastBullet).trimIndent().isNotEmpty()}>")
+            currentLine.substring(lastBullet).trimIndent().isNotEmpty()
+        }
+        else{
+            false
+        }
+    }
 }
+
+
+
+
+
+

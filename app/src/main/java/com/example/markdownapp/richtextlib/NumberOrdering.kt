@@ -168,18 +168,19 @@ object NumberOrdering {
      **/
     fun EditText.formatNumberForward(cursor:Int) {
         val checkIsStyleFormat = checkBeforeLineHaveNumber(cursor)
+        println("EditText.formatNumberForward >>>$checkIsStyleFormat")
         if (checkIsStyleFormat.first){
             post {
                 text?.insert(cursor, "${checkIsStyleFormat.second+1}. ")
             }
         }
         else{
-            val checkNextLineHaveNumber = checkNextLineHaveNumber(cursor)
-            if (checkNextLineHaveNumber.first){
-                post {
-                    text?.insert(cursor, "${checkNextLineHaveNumber.second}. ")
-                }
-            }
+//            val checkNextLineHaveNumber = checkNextLineHaveNumber(cursor)
+//            if (checkNextLineHaveNumber.first){
+//                post {
+//                    text?.insert(cursor, "${checkNextLineHaveNumber.second}. ")
+//                }
+//            }
         }
     }
 
@@ -191,12 +192,21 @@ object NumberOrdering {
         val checkStartLineHaveNumber = checkCurrentLineHaveNumber(cursor)
         if (checkStartLineHaveNumber.first){
             formatNumber(cursor = cursor, number = checkStartLineHaveNumber.second)
+            return
         }
 
         val checkWhileCursorInBeforeOfNewLine = checkBeforeLineHaveNumber(cursor)
         if (checkWhileCursorInBeforeOfNewLine.first){
             println("EditText.checkStartLineHaveNumber >>number>back>${checkWhileCursorInBeforeOfNewLine.second}")
             formatNumber(cursor,checkWhileCursorInBeforeOfNewLine.second)
+            return
+        }
+
+        val checkNextLineHaveNumber = checkNextLineHaveNumber(cursor)
+        if (checkNextLineHaveNumber.first){
+            println("EditText.checkStartLineHaveNumber >>number>next>${checkWhileCursorInBeforeOfNewLine.second}")
+            formatNumber(cursor,checkWhileCursorInBeforeOfNewLine.second)
+            return
         }
     }
 

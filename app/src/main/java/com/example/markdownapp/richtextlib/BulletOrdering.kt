@@ -144,7 +144,12 @@ object BulletOrdering {
 }
 
 
-
+fun EditText.insertSafeAt(position:Int,char:String) {
+    try {
+        text.insert(position,char)
+    }
+    catch (e:Exception){}
+}
 
 
 
